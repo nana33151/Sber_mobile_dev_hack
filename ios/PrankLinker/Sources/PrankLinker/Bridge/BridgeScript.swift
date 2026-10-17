@@ -35,8 +35,24 @@ enum BridgeScript {
         if (event.source === window) { send(event.data); }
       });
       window.addEventListener('error', function (event) {
+        var target = event.target;
+        if (target && target !== window && (target.src || target.href)) {
+          // Не загрузился ресурс страницы: скрипт, модуль, картинка, стиль.
+          send({ event: 'error', code: 'RESOURCE', message: 'Не загрузился ' + (target.src || target.href) });
+          return;
+        }
         send({ event: 'error', code: 'INTERNAL', message: String(event.message || 'Script error') });
-      });
+      }, true);
+      var originalConsoleError = console.error;
+      console.error = function () {
+        try {
+          var text = Array.prototype.map.call(arguments, function (item) {
+            return item && item.message ? item.message : String(item);
+          }).join(' ');
+          send({ event: 'error', code: 'CONSOLE', message: text });
+        } catch (_) {}
+        return originalConsoleError.apply(console, arguments);
+      };
       window.addEventListener('unhandledrejection', function (event) {
         var reason = event.reason;
         send({ event: 'error', code: 'INTERNAL', message: String((reason && reason.message) || reason || 'Unhandled rejection') });
@@ -49,16 +65,36 @@ enum BridgeScript {
         });
       }
       function bridge() { return window.PrankBridge; }
+      // Модули (<script type="module">) могут выполниться позже, чем приложение позовёт init:
+      // ждём объявления PrankBridge, но не дольше таймаута показа.
+      function waitForBridge(timeoutMs) {
+        return new Promise(function (resolve) {
+          if (bridge()) { resolve(bridge()); return; }
+          var started = Date.now();
+          var timer = setInterval(function () {
+            if (bridge() || Date.now() - started > timeoutMs) {
+              clearInterval(timer);
+              resolve(bridge());
+            }
+          }, 25);
+        });
+      }
 
       window.PrankTilt = { x: 0, y: 0 };
       window.__prankNative = {
         init: async function (config) {
-          var b = bridge();
+          var b = await waitForBridge(1500);
+          if (!b) {
+            var scripts = Array.prototype.map.call(document.scripts, function (item) {
+              return (item.type || 'classic') + ':' + (item.src || 'inline');
+            }).join(', ');
+            send({ event: 'error', code: 'NO_BRIDGE', message: 'window.PrankBridge не объявлен при init. ' + location.href + ' скрипты: ' + scripts });
+          }
           if (b && typeof b.init === 'function') { await b.init(config); }
           return true;
         },
         show: async function (payload) {
-          var b = bridge();
+          var b = await waitForBridge(200);
           if (b && typeof b.show === 'function') { await b.show(payload); }
           else { await nextFrame(); }
           return true;

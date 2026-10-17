@@ -13,7 +13,7 @@ ios/
 │   ├── Triggers/       тряска, наклон
 │   └── Safety/         предохранитель от повторных сбоев, пауза между показами
 └── PrankDemoHost/      демо-приложение для защиты: условный главный экран + панель отладки
-    ├── Pranks/         config.json, мок игры cats_yarn/ и payload'ы для тестов сбоев
+    ├── Pranks/         config.json, payload.json игры cats_yarn и payload'ы для тестов сбоев
     └── PrankDemoHostTests/  интеграционные тесты с настоящим WKWebView
 ```
 
@@ -91,7 +91,15 @@ linker.screenAllowsPranks = false
 ## Контракт для JS-разработчика
 
 Страница грузится по `prank://payload/index.html`, ссылки на свои файлы — относительные.
-Прикол-папка: `index.html` + `payload.json` (поля `payload_schema.json` без `html`), см. `Pranks/cats_yarn/`.
+Прикол-папка: `index.html` + `payload.json` (поля `payload_schema.json` без `html`).
+Стартовую страницу можно задать (`PrankContent.entry`) — так демо открывает общую папку `web/`
+без копий: игра `cats_yarn` = `web/native-demo/index.html` (физика клубков) поверх рендера
+`web/src` (`window.CatAnimation`) и спрайтов `web/assets`. Схема `prank://` отдаёт файлы с CORS,
+поэтому работают `<script type="module">`, `import()` и `fetch()`.
+
+Если `window.PrankBridge` объявляется модулем, линкер ждёт его до 1,5 с. Не дождался — в лог уходит
+`NO_BRIDGE`. Ошибки загрузки ресурсов (`RESOURCE`) и `console.error` (`CONSOLE`) тоже приходят
+приложению как `pageError`.
 
 Приложение → страница (линкер вызывает после загрузки):
 

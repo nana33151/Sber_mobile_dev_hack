@@ -10,6 +10,10 @@ final class DemoContentProvider: PrankContentProvider, @unchecked Sendable {
     }
 
     private let base: DirectoryContentProvider
+    /// Общая папка `web/` из репозитория, лежит в сборке целиком.
+    private let webRoot = Bundle.main.url(forResource: "web", withExtension: nil)
+    /// Игра с котиками — страница поверх общего JS-рендера, без копий файлов.
+    private let gameEntries = ["cats_yarn": "native-demo/index.html"]
     private let lock = NSLock()
     private var _failsLoading = false
 
@@ -32,6 +36,10 @@ final class DemoContentProvider: PrankContentProvider, @unchecked Sendable {
             try await Task.sleep(nanoseconds: 400_000_000)
             throw SimulatedLoadFailure()
         }
-        return try await base.loadContent(payloadID: payloadID)
+        let content = try await base.loadContent(payloadID: payloadID)
+        if let entry = gameEntries[payloadID], let webRoot {
+            return PrankContent(payload: content.payload, source: .directory(webRoot), entry: entry)
+        }
+        return content
     }
 }

@@ -5,6 +5,22 @@ import XCTest
 /// Прогоняет настоящий линкер с настоящим WKWebView внутри демо-приложения:
 /// мок-игра и все сценарии сбоев из `Pranks/`. Главное, что проверяем, — приложение
 /// не падает, оверлей убирается, а приложение получает понятное событие.
+/// Как в приложении: `cats_yarn` — страница `web/native-demo` поверх общего JS-рендера.
+private struct GameContentProvider: PrankContentProvider {
+    let root: URL
+    let web: URL
+
+    func loadConfig() async throws -> Data {
+        try await DirectoryContentProvider(root: root).loadConfig()
+    }
+
+    func loadContent(payloadID: String) async throws -> PrankContent {
+        let content = try await DirectoryContentProvider(root: root).loadContent(payloadID: payloadID)
+        guard payloadID == "cats_yarn" else { return content }
+        return PrankContent(payload: content.payload, source: .directory(web), entry: "native-demo/index.html")
+    }
+}
+
 @MainActor
 final class LinkerIntegrationTests: XCTestCase {
 
@@ -24,7 +40,8 @@ final class LinkerIntegrationTests: XCTestCase {
         var options = PrankLinker.Options()
         options.cooldown = 0
         options.maxConsecutiveFailures = 100
-        linker = PrankLinker(content: DirectoryContentProvider(root: root), options: options, tiltSource: ManualTiltSource())
+        let web = try XCTUnwrap(Bundle.main.url(forResource: "web", withExtension: nil))
+        linker = PrankLinker(content: GameContentProvider(root: root, web: web), options: options, tiltSource: ManualTiltSource())
         recorder = Recorder()
         linker.delegate = recorder
         linker.attach(to: scene)
@@ -134,7 +151,7 @@ final class LinkerIntegrationTests: XCTestCase {
     }
 
     func testLaunchFailurePlaysFallbackAnimationForItsDuration() async throws {
-        let atlas = try XCTUnwrap(Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "assets"))
+        let atlas = try XCTUnwrap(Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "web/assets"))
         var animation = try XCTUnwrap(PrankFallbackAnimation.atlas(at: atlas))
         XCTAssertEqual(animation.frames.count, 4, "4 кадра танца из web/assets/atlas.json")
         animation.totalDuration = 2
@@ -155,7 +172,7 @@ final class LinkerIntegrationTests: XCTestCase {
     }
 
     func testFallbackNotPlayedWhenFailureHappensAfterShow() async {
-        let atlas = Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "assets")!
+        let atlas = Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "web/assets")!
         linker.options.launchFailureAnimation = PrankFallbackAnimation.atlas(at: atlas)
         linker.show(payloadID: "crash_hang")
         let failed = await waitFor(8) { if case .failed = $0 { true } else { false } }

@@ -123,7 +123,8 @@ final class PrankPresenter: NSObject {
         showDeadline = Timer.scheduledTimer(withTimeInterval: timing.showTimeout, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.fail(.timeout) }
         }
-        webView.load(URLRequest(url: PrankSchemeHandler.entryURL))
+        let entry = content.source == .inline ? PrankSchemeHandler.entryURL : PrankSchemeHandler.entryURL(for: content.entry)
+        webView.load(URLRequest(url: entry))
     }
 
     /// Закрыть показ. Повторные вызовы безопасны.

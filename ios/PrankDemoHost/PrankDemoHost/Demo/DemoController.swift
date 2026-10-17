@@ -46,7 +46,7 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
         // В демо сбои вызываем специально — не даём предохранителю выключить приколы.
         options.maxConsecutiveFailures = 50
         // Танцующий котик из общих ассетов JS-рендера (web/assets): играет, если игра не запустилась.
-        if let atlas = Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "assets") {
+        if let atlas = Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "web/assets") {
             options.launchFailureAnimation = PrankFallbackAnimation.atlas(at: atlas)
         }
         #if targetEnvironment(simulator)

@@ -13,10 +13,20 @@ public struct PrankContent: Sendable, Equatable {
 
     public let payload: PrankPayload
     public let source: Source
+    /// Стартовая страница внутри папки игры, относительный путь. Для `.inline` всегда `index.html`.
+    /// Позволяет взять общую папку `web/` и открыть в ней нужную страницу, не копируя файлы.
+    public let entry: String
 
-    public init(payload: PrankPayload, source: Source = .inline) {
+    public init(payload: PrankPayload, source: Source = .inline, entry: String = "index.html") {
         self.payload = payload
         self.source = source
+        self.entry = Self.isSafeEntry(entry) ? entry : "index.html"
+    }
+
+    /// Только относительный путь внутри папки: без `..`, без схемы и абсолютных путей.
+    static func isSafeEntry(_ entry: String) -> Bool {
+        !entry.isEmpty && !entry.hasPrefix("/") && !entry.contains(":") && !entry.contains("\\")
+            && !entry.split(separator: "/").contains("..")
     }
 }
 

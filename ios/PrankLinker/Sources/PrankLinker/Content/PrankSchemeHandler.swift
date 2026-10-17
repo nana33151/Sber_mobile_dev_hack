@@ -11,6 +11,11 @@ final class PrankSchemeHandler: NSObject, WKURLSchemeHandler {
     static let scheme = "prank"
     static let entryURL = URL(string: "\(scheme)://payload/index.html")!
 
+    static func entryURL(for entry: String) -> URL {
+        let encoded = entry.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "index.html"
+        return URL(string: "\(scheme)://payload/\(encoded)") ?? entryURL
+    }
+
     enum Content {
         case payload(PrankPayload)
         case directory(URL)
@@ -39,7 +44,9 @@ final class PrankSchemeHandler: NSObject, WKURLSchemeHandler {
             headerFields: [
                 "Content-Type": mimeType,
                 "Content-Length": String(data.count),
-                "Cache-Control": "no-store"
+                "Cache-Control": "no-store",
+                // ES-модули (<script type="module">) и fetch() на своей схеме WebKit грузит только с CORS.
+                "Access-Control-Allow-Origin": "*"
             ]
         )
         task.didReceive(response ?? URLResponse(url: url, mimeType: mimeType, expectedContentLength: data.count, textEncodingName: nil))
