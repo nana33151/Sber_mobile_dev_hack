@@ -3,32 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Cat Animation Overlay</title>
-    <link rel="stylesheet" href="./style.css" />
+    <title>SberKids Prank</title>
+    <style>
+      body {
+        margin: 0;
+        background: #f2f4f8; /* Светлый фон для наглядности в браузере */
+        overflow: hidden;
+      }
+      /* Canvas поверх всего приложения */
+      #cat-animation-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none; /* Клики проходят сквозь игру в приложение */
+        z-index: 9999;
+      }
+    </style>
   </head>
   <body>
-    <main class="demo-screen">
-      <header>
-        <span class="eyebrow">Демонстрационный экран</span>
-        <h1>Главная</h1>
-      </header>
-      <section class="balance-card">
-        <span>Карманные деньги</span>
-        <strong>1 240 ₽</strong>
-      </section>
-      <section class="action-grid" aria-label="Действия">
-        <button type="button">История</button>
-        <button type="button">Копилка</button>
-        <button type="button" id="replay-demo">Повторить анимацию</button>
-      </section>
-      <section class="feed" aria-label="Лента">
-        <article>Новое достижение</article>
-        <article>Совет дня</article>
-        <article>Задания</article>
-      </section>
-    </main>
+    <!-- Текст для визуализации, что приложение под нами -->
+    <div style="padding: 20px; font-family: sans-serif; opacity: 0.3;">
+      <h1>Экран SberKids</h1>
+      <p>Здесь может быть баланс, кнопки и т.д.</p>
+    </div>
 
+    <!-- Canvas для анимаций -->
     <canvas id="cat-animation-overlay" aria-hidden="true"></canvas>
+
+    <!-- Точка входа -->
     <script type="module" src="./prank.js"></script>
   </body>
 </html>
