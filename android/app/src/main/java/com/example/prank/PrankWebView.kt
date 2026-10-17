@@ -50,7 +50,7 @@ class PrankWebView @JvmOverloads constructor(
         }
     }
 
-    fun loadEngine() {
-        loadUrl("https://appassets.androidplatform.net/assets/prank_engine/index.html")
-    }
+    fun loadEngine(assetPath: String = "prank_engine") {
+    loadUrl("https://appassets.androidplatform.net/assets/$assetPath/index.html")
+}
 }

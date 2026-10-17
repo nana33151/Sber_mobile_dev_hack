@@ -8,7 +8,8 @@ import org.json.JSONObject
 
 class PrankEngine(
     private val webView: PrankWebView,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val config: PrankConfig = PrankConfig(),
 ) {
     private val _events = MutableSharedFlow<PrankEvent>(
         replay = 8,
@@ -41,7 +42,7 @@ class PrankEngine(
 
         // Игра может идти долго — 5 минут с запасом
         showTimeoutJob = scope.launch {
-            delay(5 * 60_000)
+    		delay(config.showTimeoutMs)  
             Log.w("PrankEngine", "Native timeout: forcing hide")
             hide("timeout")
             _events.emit(PrankEvent.Error("TIMEOUT", "Prank did not complete in 5m"))
