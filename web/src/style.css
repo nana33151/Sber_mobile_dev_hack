@@ -11,11 +11,13 @@
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .demo-screen {
   width: min(100%, 430px);
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0 auto;
   padding: max(24px, env(safe-area-inset-top)) 20px 48px;
 }
@@ -80,6 +82,33 @@ button,
   z-index: 9999;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   pointer-events: none;
   touch-action: none;
+}
+
+@media (max-width: 360px) {
+  .demo-screen {
+    padding-inline: 14px;
+  }
+
+  .balance-card {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .action-grid,
+  .feed {
+    gap: 9px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .demo-screen {
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+
+  .feed {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

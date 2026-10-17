@@ -1,5 +1,6 @@
 import {
   DEFAULT_DANCE_DURATION_MS,
+  computeLayout,
   danceFrameIndex,
   normalizeScene
 } from "./animation-core.js";
@@ -38,6 +39,7 @@ export class CatAnimationRenderer {
     this.pixelRatio = 1;
     this.boundResize = () => this.resize();
     this.boundFrame = (time) => this.frame(time);
+    this.visualViewport = window.visualViewport ?? null;
   }
 
   async init() {
@@ -54,6 +56,7 @@ export class CatAnimationRenderer {
 
     this.resize();
     window.addEventListener("resize", this.boundResize, { passive: true });
+    this.visualViewport?.addEventListener("resize", this.boundResize, { passive: true });
     this.rafId = requestAnimationFrame(this.boundFrame);
     this.canvas.dispatchEvent(new CustomEvent("cat-animation:ready"));
     return this;
@@ -61,6 +64,7 @@ export class CatAnimationRenderer {
 
   destroy() {
     window.removeEventListener("resize", this.boundResize);
+    this.visualViewport?.removeEventListener("resize", this.boundResize);
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     this.rafId = null;
     this.context.clearRect(0, 0, this.width, this.height);
@@ -87,6 +91,7 @@ export class CatAnimationRenderer {
     const originX = Number.isFinite(Number(x)) ? Number(x) : cat?.x ?? 0.5;
     const originY = Number.isFinite(Number(y)) ? Number(y) : cat?.y ?? 0.7;
     const now = performance.now();
+    const layout = computeLayout(this.width, this.height, this.scene.cats.length);
 
     if (cat) this.bumps.set(cat.id, now);
 
@@ -100,7 +105,7 @@ export class CatAnimationRenderer {
         vy: Math.sin(angle) * speed - 25,
         life: 0.55 + Math.random() * 0.25,
         age: 0,
-        radius: 3 + Math.random() * 4,
+        radius: (3 + Math.random() * 4) * layout.particleScale,
         color: ["#ff5f6d", "#ffd93d", "#65d6a6", "#55b8ff"][index % 4]
       });
     }
@@ -140,8 +145,9 @@ export class CatAnimationRenderer {
     context.clearRect(0, 0, this.width, this.height);
     if (!this.atlas || (!this.scene.visible && this.particles.length === 0)) return;
 
-    for (const yarn of this.scene.yarns) this.drawYarn(yarn);
-    for (const cat of this.scene.cats) this.drawCat(cat, time);
+    const layout = computeLayout(this.width, this.height, this.scene.cats.length);
+    for (const yarn of this.scene.yarns) this.drawYarn(yarn, layout);
+    for (const cat of this.scene.cats) this.drawCat(cat, time, layout);
     this.drawParticles();
 
     if (this.dance && time - this.dance.startedAt >= this.dance.durationMs) {
@@ -150,10 +156,10 @@ export class CatAnimationRenderer {
     }
   }
 
-  drawYarn(yarn) {
+  drawYarn(yarn, layout) {
     const frames = this.atlas.yarnVariants.frames;
     const frame = frames[yarn.variant % frames.length];
-    const size = Math.max(34, Math.min(58, this.width * 0.12)) * yarn.scale;
+    const size = layout.yarnHeight * yarn.scale;
     this.drawSprite(
       this.images.yarnVariants,
       frame,
@@ -165,7 +171,7 @@ export class CatAnimationRenderer {
     );
   }
 
-  drawCat(cat, time) {
+  drawCat(cat, time, layout) {
     let frame;
     let image;
     let bounce = 0;
@@ -181,18 +187,17 @@ export class CatAnimationRenderer {
       const bumpedAt = this.bumps.get(cat.id);
       if (bumpedAt) {
         const progress = (time - bumpedAt) / 350;
-        if (progress < 1) bounce = Math.sin(progress * Math.PI) * 12;
+        if (progress < 1) bounce = Math.sin(progress * Math.PI) * layout.catHeight * 0.075;
         else this.bumps.delete(cat.id);
       }
     }
 
-    const baseSize = Math.max(92, Math.min(164, this.width / Math.max(3, this.scene.cats.length) * 0.92));
     this.drawSprite(
       image,
       frame,
       cat.x * this.width,
       cat.y * this.height - bounce,
-      baseSize * cat.scale,
+      layout.catHeight * cat.scale,
       0,
       cat.opacity
     );

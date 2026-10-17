@@ -7,7 +7,9 @@ The renderer owns only visuals:
 - cat states with zero, one or two yarn balls;
 - yarn-ball sprites at coordinates supplied by game mechanics;
 - catch particles;
-- a four-frame, 2.4-second final dance.
+- a four-frame, 1.6-second final dance;
+- responsive sizing for compact, portrait and landscape phone screens;
+- Retina-ready optimized PNG assets totaling about 1.21 MB.
 
 Sensors, gravity, collisions and game rules are intentionally outside this module. See `contract/animation_api.md` for the integration API.
 

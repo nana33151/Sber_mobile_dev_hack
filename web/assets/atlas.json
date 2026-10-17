@@ -2,32 +2,32 @@
   "catStates": {
     "image": "cat-states.png",
     "frames": {
-      "ready": { "x": 185, "y": 16, "width": 523, "height": 693 },
-      "oneBall": { "x": 847, "y": 16, "width": 505, "height": 693 },
-      "twoBalls": { "x": 1519, "y": 16, "width": 529, "height": 693 }
+      "ready": { "x": 93, "y": 8, "width": 261, "height": 346 },
+      "oneBall": { "x": 424, "y": 8, "width": 252, "height": 346 },
+      "twoBalls": { "x": 760, "y": 8, "width": 264, "height": 346 }
     }
   },
   "catDance": {
     "image": "cat-dance-simple.png",
-    "durationMs": 2400,
+    "durationMs": 1600,
     "frames": [
-      { "x": 64, "y": 45, "width": 467, "height": 616 },
-      { "x": 611, "y": 50, "width": 459, "height": 612 },
-      { "x": 1150, "y": 48, "width": 466, "height": 613 },
-      { "x": 1695, "y": 50, "width": 453, "height": 611 }
+      { "x": 32, "y": 22, "width": 234, "height": 309 },
+      { "x": 305, "y": 25, "width": 230, "height": 306 },
+      { "x": 575, "y": 24, "width": 233, "height": 307 },
+      { "x": 847, "y": 25, "width": 227, "height": 306 }
     ]
   },
   "yarnVariants": {
     "image": "yarn-variants.png",
     "frames": [
-      { "x": 54, "y": 230, "width": 218, "height": 275 },
-      { "x": 272, "y": 226, "width": 271, "height": 283 },
-      { "x": 543, "y": 226, "width": 271, "height": 282 },
-      { "x": 835, "y": 225, "width": 232, "height": 284 },
-      { "x": 1094, "y": 225, "width": 264, "height": 284 },
-      { "x": 1358, "y": 225, "width": 271, "height": 284 },
-      { "x": 1629, "y": 225, "width": 272, "height": 284 },
-      { "x": 1901, "y": 225, "width": 226, "height": 285 }
+      { "x": 27, "y": 115, "width": 109, "height": 138 },
+      { "x": 136, "y": 113, "width": 136, "height": 141 },
+      { "x": 272, "y": 113, "width": 135, "height": 141 },
+      { "x": 417, "y": 112, "width": 117, "height": 142 },
+      { "x": 547, "y": 113, "width": 132, "height": 141 },
+      { "x": 679, "y": 113, "width": 136, "height": 141 },
+      { "x": 815, "y": 113, "width": 136, "height": 142 },
+      { "x": 951, "y": 112, "width": 112, "height": 143 }
     ]
   }
 }

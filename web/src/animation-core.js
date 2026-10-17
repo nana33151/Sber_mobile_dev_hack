@@ -1,5 +1,5 @@
 export const DANCE_FRAME_COUNT = 4;
-export const DEFAULT_DANCE_DURATION_MS = 2400;
+export const DEFAULT_DANCE_DURATION_MS = 1600;
 
 export function clamp(value, min, max) {
   const numeric = Number(value);
@@ -11,6 +11,27 @@ export function danceFrameIndex(elapsedMs, durationMs = DEFAULT_DANCE_DURATION_M
   const safeDuration = Math.max(1, Number(durationMs) || DEFAULT_DANCE_DURATION_MS);
   const progress = clamp(Number(elapsedMs) / safeDuration, 0, 0.999999);
   return Math.floor(progress * DANCE_FRAME_COUNT);
+}
+
+export function computeLayout(width, height, catCount) {
+  const safeWidth = Math.max(1, Number(width) || 1);
+  const safeHeight = Math.max(1, Number(height) || 1);
+  const shortSide = Math.min(safeWidth, safeHeight);
+  const columns = Math.max(3, Math.min(4, Number(catCount) || 3));
+
+  return {
+    catHeight: clamp(
+      Math.min(safeWidth / columns * 0.92, safeHeight * 0.24, shortSide * 0.36),
+      72,
+      164
+    ),
+    yarnHeight: clamp(
+      Math.min(shortSide * 0.12, safeHeight * 0.085),
+      28,
+      58
+    ),
+    particleScale: clamp(shortSide / 390, 0.75, 1.2)
+  };
 }
 
 export function normalizeScene(input = {}) {

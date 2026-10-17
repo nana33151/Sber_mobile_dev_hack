@@ -54,7 +54,7 @@ export function startNativeMock(api) {
       api.setScene({ visible: true, cats, yarns: visibleYarns });
 
       if (caught.size === yarns.length) {
-        api.playDance({ durationMs: 2400 });
+        api.playDance({ durationMs: 1600 });
         return;
       }
 

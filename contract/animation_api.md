@@ -27,7 +27,7 @@ window.CatAnimation.playCatch({
   y: 0.7
 });
 
-window.CatAnimation.playDance({ durationMs: 2400 });
+window.CatAnimation.playDance({ durationMs: 1600 });
 window.CatAnimation.hide();
 ```
 
