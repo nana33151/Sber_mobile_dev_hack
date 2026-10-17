@@ -1,0 +1,31 @@
+/* Базовая прозрачность для WebView */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+    overflow: hidden;
+    /* Отключаем выделение текста */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+#prank-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* По умолчанию пропускаем клики сквозь WebView */
+    pointer-events: none;
+}
+
+/* Для отладки: если в URL есть ?test=true, красим фон */
+body.debug-mode {
+    background: rgba(255, 0, 0, 0.2) !important;
+}
