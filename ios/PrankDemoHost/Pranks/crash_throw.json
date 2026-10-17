@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "id": "crash_throw",
+  "title": "Тест: исключение в show()",
+  "html": "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head><body style='margin:0;background:transparent'><div id='m' style='position:fixed;top:45%;width:100%;text-align:center;font:600 20px -apple-system;color:#c33'>Тест: исключение в show()</div></body></html>",
+  "js": "window.PrankBridge={init:function(){},show:function(){throw new Error('boom in show');}};",
+  "duration_ms": 8000,
+  "background": "transparent"
+}

@@ -152,7 +152,7 @@ export class CatAnimationRenderer {
 
     if (this.dance && time - this.dance.startedAt >= this.dance.durationMs) {
       this.dance = null;
-      this.canvas.dispatchEvent(new CustomEvent("cat-animation:dance-complete"));
+      this.canvas.dispatchEvent(new CustomEvent("cat-animation:dance-complete", { bubbles: true }));
     }
   }
 

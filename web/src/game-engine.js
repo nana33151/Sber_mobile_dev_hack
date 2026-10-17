@@ -13,6 +13,11 @@ export class GameEngine {
         this.yarnRadius = 0.06;
         this.catRadius = 0.12;
 
+        // Коллизии между объектами считаем в «долях короткой стороны экрана»,
+        // чтобы круг оставался кругом и на вытянутом экране 9:19,5.
+        this.yarnBodyRadius = 0.06; // клубок ≈ 0,12 короткой стороны
+        this.catBodyRadius = 0.17;  // котик ≈ 0,34 короткой стороны
+
         this.boundOrientation = this.handleOrientation.bind(this);
         this.boundFrame = this.gameLoop.bind(this);
         this.rafId = null;
@@ -70,14 +75,18 @@ export class GameEngine {
         const numCats = Math.floor(Math.random() * 2) + 3; // 3 или 4 кота
         const numYarns = numCats * 2; // По 2 клубка на кота
 
-        // 1. Генерируем котов в случайных местах (не у самых краев)
+        // 1. Генерируем котов в случайных местах (не у самых краев) и не друг на друге
         for (let i = 0; i < numCats; i++) {
-            this.cats.push({
-                id: `cat-${i}`,
-                x: 0.15 + Math.random() * 0.7, // от 15% до 85% ширины
-                y: 0.15 + Math.random() * 0.7, // от 15% до 85% высоты
-                balls: 0
-            });
+            let spawn;
+            let attempts = 0;
+            do {
+                spawn = { x: 0.15 + Math.random() * 0.7, y: 0.15 + Math.random() * 0.7 }; // 15–85% экрана
+                attempts++;
+            } while (
+                this.cats.some(cat => this.distance(spawn, cat) < this.catBodyRadius * 2) &&
+                attempts < 200
+            );
+            this.cats.push({ id: `cat-${i}`, x: spawn.x, y: spawn.y, balls: 0 });
         }
 
         // 2. Генерируем клубки
@@ -85,15 +94,18 @@ export class GameEngine {
             let spawnX, spawnY, isTooCloseToCat;
             let attempts = 0;
 
-            // Пытаемся спавнить клубки так, чтобы они не появлялись прямо на котах
+            // Клубки не появляются ни на котах, ни друг на друге
             do {
                 spawnX = 0.1 + Math.random() * 0.8;
                 spawnY = 0.1 + Math.random() * 0.8;
-                isTooCloseToCat = this.cats.some(cat =>
-                    Math.hypot(spawnX - cat.x, spawnY - cat.y) < (this.yarnRadius + this.catRadius)
-                );
+                const spawn = { x: spawnX, y: spawnY };
+                isTooCloseToCat =
+                    this.cats.some(cat =>
+                        Math.hypot(spawnX - cat.x, spawnY - cat.y) < (this.yarnRadius + this.catRadius)
+                    ) ||
+                    this.yarns.some(yarn => this.distance(spawn, yarn) < this.yarnBodyRadius * 2);
                 attempts++;
-            } while (isTooCloseToCat && attempts < 20);
+            } while (isTooCloseToCat && attempts < 200);
 
             this.yarns.push({
                 id: `yarn-${i}`,
@@ -130,6 +142,9 @@ export class GameEngine {
             yarn.x = Math.max(0.05, Math.min(0.95, yarn.x));
             yarn.y = Math.max(0.05, Math.min(0.95, yarn.y));
         });
+
+        // 1б. Клубки сталкиваются друг с другом, а не слипаются
+        this.separateYarns(activeYarns);
 
         // 2. Проверка коллизий
         activeYarns.forEach(yarn => {
@@ -173,6 +188,57 @@ export class GameEngine {
         }
 
         this.rafId = requestAnimationFrame(this.boundFrame);
+    }
+
+    /// Масштаб нормализованных осей к короткой стороне экрана.
+    aspect() {
+        const width = window.innerWidth || 1;
+        const height = window.innerHeight || 1;
+        const short = Math.min(width, height);
+        return { x: width / short, y: height / short };
+    }
+
+    /// Расстояние между точками в долях короткой стороны экрана.
+    distance(a, b) {
+        const k = this.aspect();
+        return Math.hypot((a.x - b.x) * k.x, (a.y - b.y) * k.y);
+    }
+
+    /// Расталкиваем пересекающиеся клубки поровну вдоль линии центров (несколько проходов —
+    /// чтобы кучка в углу тоже разошлась). Края экрана остаются жёсткими.
+    separateYarns(yarns) {
+        const k = this.aspect();
+        const minDistance = this.yarnBodyRadius * 2;
+        for (let pass = 0; pass < 3; pass++) {
+            for (let i = 0; i < yarns.length; i++) {
+                for (let j = i + 1; j < yarns.length; j++) {
+                    const a = yarns[i];
+                    const b = yarns[j];
+                    let dx = (b.x - a.x) * k.x;
+                    let dy = (b.y - a.y) * k.y;
+                    let dist = Math.hypot(dx, dy);
+                    if (dist >= minDistance) continue;
+                    if (dist < 1e-6) {
+                        // Совпали точно — разводим в случайную сторону
+                        const angle = Math.random() * Math.PI * 2;
+                        dx = Math.cos(angle);
+                        dy = Math.sin(angle);
+                        dist = 1;
+                    }
+                    const push = (minDistance - Math.min(dist, minDistance)) / 2;
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+                    a.x -= (nx * push) / k.x;
+                    a.y -= (ny * push) / k.y;
+                    b.x += (nx * push) / k.x;
+                    b.y += (ny * push) / k.y;
+                    a.x = Math.max(0.05, Math.min(0.95, a.x));
+                    a.y = Math.max(0.05, Math.min(0.95, a.y));
+                    b.x = Math.max(0.05, Math.min(0.95, b.x));
+                    b.y = Math.max(0.05, Math.min(0.95, b.y));
+                }
+            }
+        }
     }
 
     triggerWin() {

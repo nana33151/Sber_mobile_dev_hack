@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "id": "crash_escape",
+  "title": "Тест: попытка уйти наружу",
+  "html": "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'></head><body style='margin:0;background:transparent'><div id='m' style='position:fixed;top:45%;width:100%;text-align:center;font:600 20px -apple-system;color:#c33'>Тест: попытка уйти наружу</div></body></html>",
+  "js": "window.PrankBridge={show:function(){setTimeout(function(){window.open('https://example.com');location.href='https://example.com';},500);return Promise.resolve();}};",
+  "duration_ms": 8000,
+  "background": "transparent"
+}
