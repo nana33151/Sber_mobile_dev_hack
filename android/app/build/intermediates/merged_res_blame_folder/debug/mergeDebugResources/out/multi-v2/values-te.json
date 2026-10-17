@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.prank.app-mergeDebugResources-21:/values-te/values-te.xml",
+            "outputFile": "com.example.prank.app-mergeDebugResources-22:/values-te/values-te.xml",
             "map": [
                 {
                     "source": "/home/yana/.gradle/caches/transforms-4/5bd166b9af37491df9943c6a0ec9aa20/transformed/core-1.13.0/res/values-te/values-te.xml",

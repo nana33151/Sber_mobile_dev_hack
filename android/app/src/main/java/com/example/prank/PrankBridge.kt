@@ -14,10 +14,11 @@ class PrankBridge(
         try {
             val json = JSONObject(jsonString)
             val event = json.optString("event")
-            val payload = json.optJSONObject("payload") ?: JSONObject()
-            Handler(Looper.getMainLooper()).post {
-                onEvent(event, payload)
-            }
+            // Движок шлёт "data", MVP ожидал "payload" — принимаем оба
+            val payload = json.optJSONObject("data")
+                ?: json.optJSONObject("payload")
+                ?: JSONObject()
+            Handler(Looper.getMainLooper()).post { onEvent(event, payload) }
         } catch (e: Exception) {
             Log.e("PrankBridge", "Bad message: $jsonString", e)
         }

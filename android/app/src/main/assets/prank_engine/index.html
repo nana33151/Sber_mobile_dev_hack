@@ -1,136 +1,31 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Prank Game</title>
     <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            background: transparent;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-        }
-        #prank-container {
-            position: fixed;
-            inset: 0;
-            display: none;
-        }
+      html, body {
+        margin: 0; padding: 0;
+        width: 100%; height: 100%;
+        background: transparent;
+        overflow: hidden;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      #cat-animation-overlay {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        display: block;
+        pointer-events: none;
+        z-index: 9999;
+      }
     </style>
-</head>
-<body>
-<div id="prank-container"></div>
-
-<script>
-(function () {
-    const listeners = {};
-    let current = null;
-
-    function emit(event, payload) {
-        if (listeners[event]) {
-            listeners[event].forEach(cb => cb(payload));
-        }
-        // Отправка в Android
-        if (window.AndroidBridge && window.AndroidBridge.postMessage) {
-            window.AndroidBridge.postMessage(JSON.stringify({ event, payload }));
-        } else {
-            console.log('Bridge not found:', event, payload);
-        }
-    }
-
-    window.PrankBridge = {
-        init(config) {
-            return new Promise((resolve) => {
-                console.log('PrankBridge.init', config);
-                // Здесь можно включить/выключить пранки по config.enabled
-                resolve();
-            });
-        },
-
-        show(payload) {
-            return new Promise((resolve, reject) => {
-                console.log('PrankBridge.show', payload);
-                if (!payload || payload.version !== '1' || !payload.id || !payload.html) {
-                    const err = { code: 'INVALID_PAYLOAD', message: 'Bad payload' };
-                    emit('error', err);
-                    reject(err);
-                    return;
-                }
-
-                const container = document.getElementById('prank-container');
-                container.innerHTML = payload.html;
-
-                if (payload.css) {
-                    const style = document.createElement('style');
-                    style.textContent = payload.css;
-                    document.head.appendChild(style);
-                }
-
-                // Простейший рендер: показываем контейнер
-                container.style.display = 'block';
-                current = payload.id;
-
-                // Сообщаем, что отрисовано
-                emit('shown', { payload_id: payload.id });
-                resolve();
-
-                // Автоматическое скрытие по duration_ms
-                const duration = payload.duration_ms || 5000;
-                setTimeout(() => {
-                    if (current === payload.id) {
-                        hide();
-                        emit('hidden', { payload_id: payload.id, reason: 'timeout' });
-                    }
-                }, duration);
-
-                // Обработка кликов по data-prank-action
-                container.addEventListener('click', (e) => {
-                    const target = e.target.closest('[data-prank-action]');
-                    if (target) {
-                        const action = target.getAttribute('data-prank-action');
-                        emit('action', { payload_id: payload.id, action });
-                        if (action === 'close' && payload.dismissible) {
-                            hide();
-                            emit('hidden', { payload_id: payload.id, reason: 'manual' });
-                        }
-                    }
-                });
-            });
-        },
-
-        hide(id) {
-            return new Promise((resolve) => {
-                const container = document.getElementById('prank-container');
-                container.style.display = 'none';
-                container.innerHTML = '';
-                const hiddenId = id || current;
-                current = null;
-                emit('hidden', { payload_id: hiddenId, reason: 'manual' });
-                resolve();
-            });
-        },
-
-        on(event, cb) {
-            if (!listeners[event]) listeners[event] = [];
-            listeners[event].push(cb);
-        },
-
-        getVersion() {
-            return '1';
-        }
-    };
-
-    // Сообщаем нативу, что JS готов (аналог onReady из старого контракта)
-    document.addEventListener('DOMContentLoaded', () => {
-        if (window.AndroidBridge && window.AndroidBridge.postMessage) {
-            window.AndroidBridge.postMessage(JSON.stringify({
-                event: 'shown',
-                payload: { payload_id: '__ready__' }
-            }));
-        }
-    });
-})();
-</script>
-</body>
+    <script type="module" crossorigin src="./assets/index-DqZnLkYT.js"></script>
+  </head>
+  <body>
+    <canvas id="cat-animation-overlay" aria-hidden="true"></canvas>
+  </body>
 </html>

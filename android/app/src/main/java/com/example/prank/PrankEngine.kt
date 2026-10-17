@@ -1,7 +1,6 @@
 package com.example.prank
 
 import android.util.Log
-import android.webkit.WebView
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -12,10 +11,10 @@ class PrankEngine(
     private val scope: CoroutineScope
 ) {
     private val _events = MutableSharedFlow<PrankEvent>(
-    replay = 8,
-    extraBufferCapacity = 8,
-    onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
-	)
+        replay = 8,
+        extraBufferCapacity = 8,
+        onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
+    )
     val events = _events.asSharedFlow()
 
     private var showTimeoutJob: Job? = null
@@ -23,67 +22,66 @@ class PrankEngine(
 
     init {
         webView.addJavascriptInterface(
-            PrankBridge { event, payload ->
-                handleEvent(event, payload)
-            },
+            PrankBridge { event, payload -> handleEvent(event, payload) },
             "AndroidBridge"
         )
     }
 
     fun init(configJson: String) {
-        // Передаём JSON как объект, а не строку
-        val js = "window.PrankBridge.init($configJson);"
-        webView.evaluateJavascript(js, null)
+        webView.evaluateJavascript("window.PrankBridge.init($configJson);", null)
     }
 
     fun show(payloadJson: String) {
         showTimeoutJob?.cancel()
         currentPrankId = try {
-            JSONObject(payloadJson).optString("id")
-        } catch (e: Exception) {
-            null
-        }
+            JSONObject(payloadJson).optString("id").takeIf { it.isNotBlank() }
+        } catch (_: Exception) { null }
 
-        val js = "window.PrankBridge.show($payloadJson);"
-        webView.evaluateJavascript(js, null)
+        webView.evaluateJavascript("window.PrankBridge.show($payloadJson);", null)
 
-        // Нативный таймаут: если за 10 с не пришло hidden — принудительно скрываем
+        // Игра может идти долго — 5 минут с запасом
         showTimeoutJob = scope.launch {
-            delay(10_000)
+            delay(5 * 60_000)
             Log.w("PrankEngine", "Native timeout: forcing hide")
-            hide()
-            _events.emit(PrankEvent.Error("TIMEOUT", "Prank did not complete in 10s"))
+            hide("timeout")
+            _events.emit(PrankEvent.Error("TIMEOUT", "Prank did not complete in 5m"))
         }
     }
 
-    fun hide() {
+    fun hide(reason: String = "manual") {
         showTimeoutJob?.cancel()
-        webView.evaluateJavascript("window.PrankBridge.hide();", null)
+        webView.evaluateJavascript("window.PrankBridge.hide(${JSONObject.quote(reason)});", null)
     }
 
     private fun handleEvent(event: String, payload: JSONObject) {
+        // Движок эхо-ит payload_id, если его нет — берём из текущего show()
+        val id = payload.optString("payload_id").ifBlank { currentPrankId ?: "" }
         when (event) {
-            "shown" -> {
-                val id = payload.optString("payload_id")
-                _events.tryEmit(PrankEvent.Shown(id))
-            }
+            "shown" -> _events.tryEmit(PrankEvent.Shown(id))
+
             "hidden" -> {
                 showTimeoutJob?.cancel()
-                val id = payload.optString("payload_id")
                 val reason = payload.optString("reason", "manual")
                 _events.tryEmit(PrankEvent.Hidden(id, reason))
             }
+
             "action" -> {
-                val id = payload.optString("payload_id")
                 val action = payload.optString("action")
                 _events.tryEmit(PrankEvent.Action(id, action))
+                // Конец игры: закрываем WebView после танца (движок уже отждал dance)
+                if (action == "game_won") {
+                    Log.d("PrankEngine", "game_won → auto hide")
+                    hide("game_won")
+                }
             }
+
             "error" -> {
                 showTimeoutJob?.cancel()
                 val code = payload.optString("code", "INTERNAL")
                 val message = payload.optString("message", "Unknown error")
                 _events.tryEmit(PrankEvent.Error(code, message))
             }
+
             else -> Log.w("PrankEngine", "Unknown event: $event")
         }
     }
