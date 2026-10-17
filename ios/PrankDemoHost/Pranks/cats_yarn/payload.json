@@ -1,0 +1,8 @@
+{
+  "version": "1",
+  "id": "cats_yarn",
+  "title": "Котики и клубки (мок)",
+  "duration_ms": 60000,
+  "dismissible": true,
+  "background": "transparent"
+}

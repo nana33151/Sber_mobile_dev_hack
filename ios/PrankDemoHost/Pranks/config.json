@@ -1,0 +1,8 @@
+{
+  "version": "1",
+  "enabled": true,
+  "trigger": {
+    "on": "shake",
+    "payload_id": "cats_yarn"
+  }
+}
