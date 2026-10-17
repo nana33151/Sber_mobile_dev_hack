@@ -50,6 +50,9 @@ final class PrankPresenter: NSObject {
     private var lastSentTilt: PrankTilt?
 
     private let shouldDismiss: (CGPoint) -> Bool
+    /// Размытие приложения под игрой: фон не отвлекает от котиков. Касания по-прежнему проходят насквозь.
+    private let blurView = UIVisualEffectView(effect: nil)
+    private var blursBackground = false
 
     init(
         content: PrankContent,
@@ -116,6 +119,11 @@ final class PrankPresenter: NSObject {
 
         let root = PrankOverlayViewController()
         root.dimColor = payload.background == .dim ? UIColor.black.withAlphaComponent(0.3) : .clear
+        blurView.frame = root.view.bounds
+        blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        blurView.isUserInteractionEnabled = false
+        root.view.addSubview(blurView)
+        applyBlur(animated: false)
         root.view.addSubview(webView)
         webView.frame = root.view.bounds
 
@@ -134,6 +142,23 @@ final class PrankPresenter: NSObject {
         }
         let entry = content.source == .inline ? PrankSchemeHandler.entryURL : PrankSchemeHandler.entryURL(for: content.entry)
         webView.load(URLRequest(url: entry))
+    }
+
+    /// Включить или выключить размытие фона, в том числе во время игры — плавно.
+    func setBackgroundBlur(_ enabled: Bool, animated: Bool) {
+        blursBackground = enabled
+        applyBlur(animated: animated)
+    }
+
+    private func applyBlur(animated: Bool) {
+        let effect = blursBackground ? UIBlurEffect(style: .systemUltraThinMaterial) : nil
+        guard animated else {
+            blurView.effect = effect
+            return
+        }
+        UIView.animate(withDuration: 0.3, delay: 0, options: [.beginFromCurrentState, .curveEaseInOut]) {
+            self.blurView.effect = effect
+        }
     }
 
     /// Закрыть показ. Повторные вызовы безопасны.

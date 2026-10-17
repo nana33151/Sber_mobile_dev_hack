@@ -33,8 +33,14 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
     }
 
     var presenterProvider: (() -> UIViewController?)?
-    /// Где на экране джойстик: касания по нему не закрывают прикол.
+    /// Где на экране джойстик и кнопка размытия: касания по ним не закрывают прикол.
     var joystickFrame: CGRect = .zero
+    var blurButtonFrame: CGRect = .zero
+
+    /// Размыть приложение под игрой (кнопка на экране и тумблер в панели отладки).
+    @Published var blursBackground = false {
+        didSet { linker.blursBackground = blursBackground }
+    }
 
     static let payloadIDs = ["cats_yarn", "crash_throw", "crash_hang", "crash_slow", "crash_escape", "crash_error", "crash_invalid"]
 
@@ -59,8 +65,10 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
         #endif
         linker.delegate = self
         linker.options.ignoresTouch = { [weak self] point in
-            guard let frame = self?.joystickFrame, !frame.isEmpty else { return false }
-            return frame.insetBy(dx: -16, dy: -16).contains(point)
+            guard let self else { return false }
+            return [self.joystickFrame, self.blurButtonFrame].contains { frame in
+                !frame.isEmpty && frame.insetBy(dx: -16, dy: -16).contains(point)
+            }
         }
         // Демо-режим для жюри: `-prankDemo YES` в схеме — прикол не закрывается касанием,
         // чтобы наклоном можно было управлять джойстиком на экране.

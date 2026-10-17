@@ -38,6 +38,8 @@ public final class PrankLinker {
         /// Что показать, если игра не запустилась (ошибка загрузки, таймаут, падение до первого кадра).
         /// `nil` — ничего не показывать, только событие `.failed`.
         public var launchFailureAnimation: PrankFallbackAnimation?
+        /// Вибрация «успех», когда игра реально запустилась (отрисован первый кадр).
+        public var hapticOnLaunch = true
         /// `action` страницы, на которые даём лёгкую вибрацию (игра: котик поймал клубок).
         public var hapticActions: Set<String> = ["cat_caught"]
         /// `action`, означающие победу: приложение получает `.completed`, прикол плавно закрывается.
@@ -77,6 +79,12 @@ public final class PrankLinker {
     private var hasCompleted = false
     private let shakeDetector = ShakeDetector()
     private let haptics = UIImpactFeedbackGenerator(style: .light)
+    private let launchHaptics = UINotificationFeedbackGenerator()
+
+    /// Размыть приложение под игрой, чтобы фон не мешал. Можно переключать во время игры.
+    public var blursBackground = false {
+        didSet { presenter?.setBackgroundBlur(blursBackground, animated: true) }
+    }
     private var lastHaptic = Date.distantPast
     private var observers: [NSObjectProtocol] = []
 
@@ -201,6 +209,7 @@ public final class PrankLinker {
             return
         }
         emit(.triggered(kind, payloadID: payloadID))
+        launchHaptics.prepare()
         let content = self.content
         loadingTask = Task { [weak self] in
             let result: Result<PrankContent, PrankError>
@@ -255,9 +264,14 @@ public final class PrankLinker {
         var wasShown = false
         presenter.onShown = { [weak self] in
             wasShown = true
-            self?.breaker.recordSuccess()
-            self?.emit(.shown(payloadID: content.payload.id))
+            guard let self else { return }
+            self.breaker.recordSuccess()
+            if self.options.hapticsEnabled && self.options.hapticOnLaunch {
+                self.launchHaptics.notificationOccurred(.success)
+            }
+            self.emit(.shown(payloadID: content.payload.id))
         }
+        presenter.setBackgroundBlur(blursBackground, animated: false)
         presenter.onMessage = { [weak self] body in
             self?.handle(body, from: content.payload.id)
         }

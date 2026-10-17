@@ -27,6 +27,27 @@ struct DemoRoot: View {
                     .padding(.bottom, 80)
             }
         }
+        .overlay(alignment: .topTrailing) {
+            // Размыть фон под игрой. Нажатие не закрывает прикол — можно переключать прямо во время игры.
+            Button {
+                demo.blursBackground.toggle()
+            } label: {
+                Label(demo.blursBackground ? "Фон: размыт" : "Размыть фон",
+                      systemImage: demo.blursBackground ? "drop.fill" : "drop")
+                    .font(.footnote.weight(.semibold))
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(Capsule().fill(.ultraThinMaterial))
+            }
+            .buttonStyle(.plain)
+            .background(GeometryReader { proxy in
+                Color.clear
+                    .onAppear { demo.blurButtonFrame = proxy.frame(in: .global) }
+                    .onChange(of: proxy.frame(in: .global)) { demo.blurButtonFrame = $0 }
+            })
+            .padding(.trailing, 12)
+            .padding(.top, 4)
+            .accessibilityLabel("Размыть фон под игрой")
+        }
         .overlay(alignment: .top) {
             if let toast = demo.toast {
                 Text(toast)

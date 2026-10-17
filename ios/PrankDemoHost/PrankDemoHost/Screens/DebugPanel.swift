@@ -14,6 +14,7 @@ struct DebugPanel: View {
                     Button("Как тряска (триггер из конфига)") { closeThen { demo.linker.handleShakeMotion(.motionShake) } }
                     Button("Скрыть прикол") { demo.linker.hide() }
                     Button("Перечитать конфиг") { Task { await demo.linker.reloadConfig() } }
+                    Toggle("Размыть фон под игрой", isOn: $demo.blursBackground)
                     Toggle("Сломать загрузку игры", isOn: $demo.failsGameLoading)
                     Toggle("Закрывать касанием", isOn: $demo.dismissesOnTouch)
                     Toggle("Экраны из макета Figma", isOn: $demo.usesDesignScreens)
