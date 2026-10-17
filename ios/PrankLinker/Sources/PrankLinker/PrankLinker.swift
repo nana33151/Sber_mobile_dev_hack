@@ -31,6 +31,9 @@ public final class PrankLinker {
         public var hapticsEnabled = true
         /// Закрывать прикол касанием. Выключается только в демо, чтобы управлять наклоном с экрана.
         public var dismissesOnTouch = true
+        /// Касания, которые не закрывают прикол (точка в координатах окна). Только для демо:
+        /// например, джойстик наклона в симуляторе. В продукте не задаётся.
+        public var ignoresTouch: (@MainActor (CGPoint) -> Bool)?
 
         public init() {}
     }
@@ -217,7 +220,10 @@ public final class PrankLinker {
             content: content,
             config: config ?? .disabled,
             tiltSource: tiltSource,
-            dismissesOnTouch: { [weak self] in self?.options.dismissesOnTouch ?? true }
+            shouldDismiss: { [weak self] point in
+                guard let options = self?.options else { return true }
+                return options.dismissesOnTouch && !(options.ignoresTouch?(point) ?? false)
+            }
         )
         presenter.onShown = { [weak self] in
             self?.breaker.recordSuccess()

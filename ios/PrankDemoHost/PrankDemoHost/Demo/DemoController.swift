@@ -28,6 +28,8 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
     }
 
     var presenterProvider: (() -> UIViewController?)?
+    /// Где на экране джойстик: касания по нему не закрывают прикол.
+    var joystickFrame: CGRect = .zero
 
     static let payloadIDs = ["cats_yarn", "crash_throw", "crash_hang", "crash_slow", "crash_escape", "crash_error", "crash_invalid"]
 
@@ -42,6 +44,10 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
         linker = PrankLinker(content: DirectoryContentProvider(root: root))
         #endif
         linker.delegate = self
+        linker.options.ignoresTouch = { [weak self] point in
+            guard let frame = self?.joystickFrame, !frame.isEmpty else { return false }
+            return frame.insetBy(dx: -16, dy: -16).contains(point)
+        }
         // Демо-режим для жюри: `-prankDemo YES` в схеме — прикол не закрывается касанием,
         // чтобы наклоном можно было управлять джойстиком на экране.
         if UserDefaults.standard.bool(forKey: "prankDemo") {

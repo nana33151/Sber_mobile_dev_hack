@@ -15,8 +15,14 @@ struct DemoRoot: View {
             }
         }
         .overlay(alignment: .bottomTrailing) {
-            if demo.isSimulator && !demo.dismissesOnTouch {
+            // В симуляторе нет датчиков: наклон — джойстиком (или стрелками на клавиатуре).
+            if demo.isSimulator {
                 TiltJoystick { demo.manualTilt?.set($0) }
+                    .background(GeometryReader { proxy in
+                        Color.clear
+                            .onAppear { demo.joystickFrame = proxy.frame(in: .global) }
+                            .onChange(of: proxy.frame(in: .global)) { demo.joystickFrame = $0 }
+                    })
                     .padding(24)
                     .padding(.bottom, 80)
             }

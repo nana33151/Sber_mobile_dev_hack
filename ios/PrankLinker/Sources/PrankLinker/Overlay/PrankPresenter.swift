@@ -49,16 +49,16 @@ final class PrankPresenter: NSObject {
     private var tiltInFlight = false
     private var lastSentTilt: PrankTilt?
 
-    private let dismissesOnTouch: () -> Bool
+    private let shouldDismiss: (CGPoint) -> Bool
 
     init(
         content: PrankContent,
         config: PrankConfig,
         tiltSource: any PrankTiltSource,
         timing: Timing = Timing(),
-        dismissesOnTouch: @escaping () -> Bool = { true }
+        shouldDismiss: @escaping (CGPoint) -> Bool = { _ in true }
     ) {
-        self.dismissesOnTouch = dismissesOnTouch
+        self.shouldDismiss = shouldDismiss
         self.content = content
         self.config = config
         self.tiltSource = tiltSource
@@ -113,8 +113,8 @@ final class PrankPresenter: NSObject {
         let window = PrankOverlayWindow(windowScene: scene)
         window.rootViewController = root
         window.alpha = 0
-        window.onTouch = { [weak self] in
-            guard let self, self.content.payload.dismissible, self.dismissesOnTouch() else { return }
+        window.onTouch = { [weak self] point in
+            guard let self, self.content.payload.dismissible, self.shouldDismiss(point) else { return }
             self.close(.dismiss)
         }
         window.isHidden = false

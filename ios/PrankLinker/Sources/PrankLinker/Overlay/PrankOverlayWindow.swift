@@ -5,8 +5,8 @@ import UIKit
 /// ни на один кадр.
 final class PrankOverlayWindow: UIWindow {
 
-    /// Вызывается один раз на каждое новое касание.
-    var onTouch: (() -> Void)?
+    /// Вызывается один раз на каждое новое касание, с точкой в координатах окна.
+    var onTouch: ((CGPoint) -> Void)?
 
     private var lastTouchTimestamp: TimeInterval = -1
 
@@ -26,7 +26,7 @@ final class PrankOverlayWindow: UIWindow {
         // hitTest зовётся несколько раз на одно касание — реагируем один раз.
         if let event, event.type == .touches, event.timestamp != lastTouchTimestamp {
             lastTouchTimestamp = event.timestamp
-            onTouch?()
+            onTouch?(point)
         }
         return nil
     }
