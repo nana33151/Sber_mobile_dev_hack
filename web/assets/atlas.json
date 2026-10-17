@@ -20,14 +20,14 @@
   "yarnVariants": {
     "image": "yarn-variants.png",
     "frames": [
-      { "x": 8, "y": 102, "width": 137, "height": 163 },
-      { "x": 145, "y": 102, "width": 136, "height": 163 },
-      { "x": 281, "y": 102, "width": 132, "height": 163 },
-      { "x": 413, "y": 102, "width": 131, "height": 163 },
-      { "x": 544, "y": 102, "width": 131, "height": 163 },
-      { "x": 675, "y": 102, "width": 133, "height": 163 },
-      { "x": 808, "y": 102, "width": 134, "height": 163 },
-      { "x": 942, "y": 102, "width": 144, "height": 163 }
+      { "x": 11, "y": 110, "width": 123, "height": 144 },
+      { "x": 146, "y": 110, "width": 126, "height": 144 },
+      { "x": 284, "y": 110, "width": 125, "height": 144 },
+      { "x": 419, "y": 110, "width": 124, "height": 144 },
+      { "x": 553, "y": 110, "width": 125, "height": 144 },
+      { "x": 686, "y": 110, "width": 126, "height": 144 },
+      { "x": 819, "y": 110, "width": 126, "height": 144 },
+      { "x": 951, "y": 110, "width": 127, "height": 144 }
     ]
   }
 }
