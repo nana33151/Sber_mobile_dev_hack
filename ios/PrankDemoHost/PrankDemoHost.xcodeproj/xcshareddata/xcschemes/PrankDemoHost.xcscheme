@@ -20,6 +20,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument argument = "-prankDemo NO" isEnabled = "YES"></CommandLineArgument>
+         <CommandLineArgument argument = "-prankFailLoad YES" isEnabled = "YES"></CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>
    <ProfileAction buildConfiguration = "Release" shouldUseLaunchSchemeArgsEnv = "YES" savedToolIdentifier = "" useCustomWorkingDirectory = "NO" debugDocumentVersioning = "YES">

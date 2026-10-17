@@ -15,6 +15,7 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
     }
 
     let linker: PrankLinker
+    private let content: DemoContentProvider
     /// Наклон с клавиатуры и джойстика — только в симуляторе. На телефоне работает CoreMotion.
     let manualTilt: ManualTiltSource?
 
@@ -23,6 +24,10 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
     @Published var showsDebug = false
     /// Экраны из макета Figma (картинки) или самодельный главный экран.
     @Published var usesDesignScreens = DesignImages.areAvailable
+    /// Имитировать ошибку загрузки игры: тряска → сбой → танцующий котик.
+    @Published var failsGameLoading = false {
+        didSet { content.failsLoading = failsGameLoading }
+    }
     @Published var dismissesOnTouch = true {
         didSet { linker.options.dismissesOnTouch = dismissesOnTouch }
     }
@@ -35,13 +40,22 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
 
     init() {
         let root = Bundle.main.url(forResource: "Pranks", withExtension: nil) ?? Bundle.main.bundleURL
+        let content = DemoContentProvider(root: root)
+        self.content = content
+        var options = PrankLinker.Options()
+        // В демо сбои вызываем специально — не даём предохранителю выключить приколы.
+        options.maxConsecutiveFailures = 50
+        // Танцующий котик из общих ассетов JS-рендера (web/assets): играет, если игра не запустилась.
+        if let atlas = Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "assets") {
+            options.launchFailureAnimation = PrankFallbackAnimation.atlas(at: atlas)
+        }
         #if targetEnvironment(simulator)
         let manual = ManualTiltSource()
         manualTilt = manual
-        linker = PrankLinker(content: DirectoryContentProvider(root: root), tiltSource: manual)
+        linker = PrankLinker(content: content, options: options, tiltSource: manual)
         #else
         manualTilt = nil
-        linker = PrankLinker(content: DirectoryContentProvider(root: root))
+        linker = PrankLinker(content: content, options: options)
         #endif
         linker.delegate = self
         linker.options.ignoresTouch = { [weak self] point in
@@ -50,6 +64,11 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
         }
         // Демо-режим для жюри: `-prankDemo YES` в схеме — прикол не закрывается касанием,
         // чтобы наклоном можно было управлять джойстиком на экране.
+        // `-prankFailLoad YES` в схеме — каждая загрузка игры падает (проверка нативной заглушки).
+        if UserDefaults.standard.bool(forKey: "prankFailLoad") {
+            failsGameLoading = true
+            content.failsLoading = true
+        }
         if UserDefaults.standard.bool(forKey: "prankDemo") {
             dismissesOnTouch = false
             linker.options.dismissesOnTouch = false
@@ -93,6 +112,11 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
         case .shareRequested(_, let text, let image):
             append("Поделиться: \(text ?? "") \(image == nil ? "" : "+ картинка")")
             share(text: text, image: image)
+        case .fallbackShown:
+            toast = nil // вместо тоста об ошибке — котик
+            append("Игра не запустилась — танцующий котик")
+        case .fallbackFinished:
+            append("Котик дотанцевал")
         case .ignoredMessage(let reason):
             append("Сообщение проигнорировано: \(reason)", problem: true)
         }

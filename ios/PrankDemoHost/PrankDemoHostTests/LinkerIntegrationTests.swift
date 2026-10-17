@@ -133,6 +133,36 @@ final class LinkerIntegrationTests: XCTestCase {
         XCTAssertNotNil(error)
     }
 
+    func testLaunchFailurePlaysFallbackAnimationForItsDuration() async throws {
+        let atlas = try XCTUnwrap(Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "assets"))
+        var animation = try XCTUnwrap(PrankFallbackAnimation.atlas(at: atlas))
+        XCTAssertEqual(animation.frames.count, 4, "4 кадра танца из web/assets/atlas.json")
+        animation.totalDuration = 2
+        linker.options.launchFailureAnimation = animation
+
+        let started = Date()
+        linker.show(payloadID: "no_such_prank")
+        let shown = await waitFor(2) { if case .fallbackShown = $0 { true } else { false } }
+        XCTAssertNotNil(shown, "\(recorder.events)")
+        XCTAssertTrue(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows).contains { String(describing: type(of: $0)) == "PrankOverlayWindow" && !$0.isHidden })
+
+        let finished = await waitFor(4) { if case .fallbackFinished = $0 { true } else { false } }
+        XCTAssertNotNil(finished)
+        let elapsed = Date().timeIntervalSince(started)
+        XCTAssertGreaterThan(elapsed, 1.9)
+        XCTAssertLessThan(elapsed, 3.5)
+    }
+
+    func testFallbackNotPlayedWhenFailureHappensAfterShow() async {
+        let atlas = Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "assets")!
+        linker.options.launchFailureAnimation = PrankFallbackAnimation.atlas(at: atlas)
+        linker.show(payloadID: "crash_hang")
+        let failed = await waitFor(8) { if case .failed = $0 { true } else { false } }
+        XCTAssertNotNil(failed)
+        XCTAssertFalse(recorder.events.contains { if case .fallbackShown = $0 { true } else { false } })
+    }
+
     func testSecondTriggerWhileShowingIsSkipped() async {
         linker.show(payloadID: "cats_yarn")
         linker.show(payloadID: "cats_yarn")

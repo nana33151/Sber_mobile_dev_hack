@@ -73,6 +73,9 @@ public enum PrankLinkerEvent: Sendable, Equatable {
     case finished(payloadID: String)
     case completed(payloadID: String)
     case shareRequested(payloadID: String, text: String?, image: String?)
+    /// Игра не запустилась, вместо неё играет нативная анимация (`Options.launchFailureAnimation`).
+    case fallbackShown(payloadID: String?)
+    case fallbackFinished(payloadID: String?)
     /// Сообщение страницы, которое не удалось разобрать. Показ не прерывает.
     case ignoredMessage(String)
 }

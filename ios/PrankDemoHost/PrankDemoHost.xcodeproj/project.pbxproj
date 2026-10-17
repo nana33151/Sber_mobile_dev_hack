@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* PrankLinker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* PrankLinker.framework */; };
 		A10000000000000000000002 /* Pranks in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* Pranks */; };
+		A10000000000000000000003 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* assets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,15 +31,29 @@
 
 /* Begin PBXFileReference section */
 		A10000000000000000000010 /* PrankDemoHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PrankDemoHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A10000000000000000000016 /* PrankLinker.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PrankLinker.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000018 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../../web/assets; sourceTree = "<group>"; };
 		A10000000000000000000011 /* Pranks */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Pranks; sourceTree = "<group>"; };
 		A10000000000000000000013 /* PrankDemoHostTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PrankDemoHostTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000016 /* PrankLinker.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = PrankLinker.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A10000000000000000000012 /* PrankDemoHost */ = {isa = PBXFileSystemSynchronizedRootGroup; path = PrankDemoHost; sourceTree = "<group>"; };
-		A10000000000000000000014 /* PrankDemoHostTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = PrankDemoHostTests; sourceTree = "<group>"; };
-		A10000000000000000000017 /* PrankLinker */ = {isa = PBXFileSystemSynchronizedRootGroup; name = PrankLinker; path = ../PrankLinker/Sources/PrankLinker; sourceTree = "<group>"; };
+		A10000000000000000000012 /* PrankDemoHost */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PrankDemoHost;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000014 /* PrankDemoHostTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PrankDemoHostTests;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000017 /* PrankLinker */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = PrankLinker;
+			path = ../PrankLinker/Sources/PrankLinker;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +89,7 @@
 				A10000000000000000000012 /* PrankDemoHost */,
 				A10000000000000000000014 /* PrankDemoHostTests */,
 				A10000000000000000000011 /* Pranks */,
+				A10000000000000000000018 /* assets */,
 				A10000000000000000000041 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -194,6 +210,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000002 /* Pranks in Resources */,
+				A10000000000000000000003 /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -428,7 +445,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = A10000000000000000000060 /* Project object */;
 }

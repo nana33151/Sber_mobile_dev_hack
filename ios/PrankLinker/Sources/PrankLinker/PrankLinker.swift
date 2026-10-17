@@ -34,6 +34,9 @@ public final class PrankLinker {
         /// Касания, которые не закрывают прикол (точка в координатах окна). Только для демо:
         /// например, джойстик наклона в симуляторе. В продукте не задаётся.
         public var ignoresTouch: (@MainActor (CGPoint) -> Bool)?
+        /// Что показать, если игра не запустилась (ошибка загрузки, таймаут, падение до первого кадра).
+        /// `nil` — ничего не показывать, только событие `.failed`.
+        public var launchFailureAnimation: PrankFallbackAnimation?
 
         public init() {}
     }
@@ -59,6 +62,7 @@ public final class PrankLinker {
     public var options: Options
     private weak var scene: UIWindowScene?
     private var presenter: PrankPresenter?
+    private var fallbackPresenter: PrankFallbackPresenter?
     private var loadingTask: Task<Void, Never>?
     private var delayTimer: Timer?
     private var breaker: CircuitBreaker
@@ -154,6 +158,7 @@ public final class PrankLinker {
         loadingTask?.cancel()
         loadingTask = nil
         presenter?.close(.manual)
+        fallbackPresenter?.close()
     }
 
     private func handleTrigger(_ kind: PrankConfig.TriggerKind) {
@@ -195,7 +200,7 @@ public final class PrankLinker {
         if !config.enabled { return .disabled }
         if breaker.isOpen { return .circuitOpen }
         if !screenAllowsPranks { return .forbiddenScreen }
-        if presenter != nil || loadingTask != nil { return .busy }
+        if presenter != nil || loadingTask != nil || fallbackPresenter != nil { return .busy }
         if cooldown.isActive() { return .cooldown }
         return nil
     }
@@ -207,7 +212,7 @@ public final class PrankLinker {
         switch result {
         case .success(let loaded): content = loaded
         case .failure(let error):
-            recordFailure(payloadID: payloadID, error)
+            recordFailure(payloadID: payloadID, error, duringLaunch: true)
             return
         }
         // За время загрузки пользователь мог уйти на запрещённый экран.
@@ -225,7 +230,9 @@ public final class PrankLinker {
                 return options.dismissesOnTouch && !(options.ignoresTouch?(point) ?? false)
             }
         )
+        var wasShown = false
         presenter.onShown = { [weak self] in
+            wasShown = true
             self?.breaker.recordSuccess()
             self?.emit(.shown(payloadID: content.payload.id))
         }
@@ -240,7 +247,7 @@ public final class PrankLinker {
             case .hidden(let reason):
                 self.emit(.hidden(payloadID: content.payload.id, reason: reason))
             case .failed(let error):
-                self.recordFailure(payloadID: content.payload.id, error)
+                self.recordFailure(payloadID: content.payload.id, error, duringLaunch: !wasShown)
             }
         }
         self.presenter = presenter
@@ -248,11 +255,28 @@ public final class PrankLinker {
         presenter.start(in: scene)
     }
 
-    private func recordFailure(payloadID: String?, _ error: PrankError) {
+    private func recordFailure(payloadID: String?, _ error: PrankError, duringLaunch: Bool = false) {
         breaker.recordFailure()
         cooldown.start()
         emit(.failed(payloadID: payloadID, error))
         updateShakeDetector()
+        if duringLaunch {
+            playLaunchFailureAnimation(payloadID: payloadID)
+        }
+    }
+
+    /// Игра не запустилась — показываем короткую нативную анимацию, чтобы тряска не ушла в пустоту.
+    private func playLaunchFailureAnimation(payloadID: String?) {
+        guard let animation = options.launchFailureAnimation, fallbackPresenter == nil,
+              screenAllowsPranks, let scene, scene.activationState == .foregroundActive else { return }
+        let fallback = PrankFallbackPresenter(animation: animation)
+        fallback.onFinish = { [weak self] in
+            self?.fallbackPresenter = nil
+            self?.emit(.fallbackFinished(payloadID: payloadID))
+        }
+        fallbackPresenter = fallback
+        emit(.fallbackShown(payloadID: payloadID))
+        fallback.start(in: scene)
     }
 
     // MARK: Сообщения страницы
