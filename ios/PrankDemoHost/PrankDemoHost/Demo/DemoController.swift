@@ -20,6 +20,9 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
 
     @Published private(set) var log: [LogEntry] = []
     @Published private(set) var toast: String?
+    @Published var showsDebug = false
+    /// Экраны из макета Figma (картинки) или самодельный главный экран.
+    @Published var usesDesignScreens = DesignImages.areAvailable
     @Published var dismissesOnTouch = true {
         didSet { linker.options.dismissesOnTouch = dismissesOnTouch }
     }

@@ -15,6 +15,8 @@ struct DebugPanel: View {
                     Button("Скрыть прикол") { demo.linker.hide() }
                     Button("Перечитать конфиг") { Task { await demo.linker.reloadConfig() } }
                     Toggle("Закрывать касанием", isOn: $demo.dismissesOnTouch)
+                    Toggle("Экраны из макета Figma", isOn: $demo.usesDesignScreens)
+                        .disabled(!DesignImages.areAvailable)
                 }
 
                 Section(header: Text("Приколы и тесты сбоев")) {

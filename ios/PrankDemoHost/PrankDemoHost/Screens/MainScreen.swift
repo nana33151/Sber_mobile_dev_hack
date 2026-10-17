@@ -5,7 +5,6 @@ import SwiftUI
 struct MainScreen: View {
 
     @EnvironmentObject private var demo: DemoController
-    @State private var showsDebug = false
 
     var body: some View {
         NavigationView {
@@ -40,32 +39,13 @@ struct MainScreen: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { showsDebug = true } label: { Image(systemName: "ladybug") }
+                    Button { demo.showsDebug = true } label: { Image(systemName: "ladybug") }
                         .accessibilityLabel("Панель отладки прикола")
                 }
             }
             .onAppear { demo.linker.screenAllowsPranks = true }
         }
         .navigationViewStyle(.stack)
-        .overlay(alignment: .bottomTrailing) {
-            if demo.isSimulator && !demo.dismissesOnTouch {
-                TiltJoystick { demo.manualTilt?.set($0) }
-                    .padding(24)
-            }
-        }
-        .overlay(alignment: .top) {
-            if let toast = demo.toast {
-                Text(toast)
-                    .padding(.horizontal, 16).padding(.vertical, 10)
-                    .background(Capsule().fill(.thinMaterial))
-                    .padding(.top, 8)
-                    .transition(.opacity)
-            }
-        }
-        .animation(.easeOut(duration: 0.2), value: demo.toast)
-        .sheet(isPresented: $showsDebug) {
-            DebugPanel().environmentObject(demo)
-        }
     }
 
     private func card(title: String, subtitle: String, value: String, color: Color) -> some View {

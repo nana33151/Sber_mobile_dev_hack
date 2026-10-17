@@ -16,7 +16,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = DemoHostWindow(windowScene: windowScene)
         window.linker = demo.linker
         window.tilt = demo.manualTilt
-        window.rootViewController = UIHostingController(rootView: MainScreen().environmentObject(demo))
+        window.rootViewController = UIHostingController(rootView: DemoRoot().environmentObject(demo))
         window.makeKeyAndVisible()
         self.window = window
 
