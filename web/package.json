@@ -1,9 +1,16 @@
 {
-  "name": "cat-animation-overlay",
-  "version": "1.0.0",
+  "name": "prank-engine-web",
   "private": true,
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.mjs"
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "lottie-web": "^5.12.2"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
   }
 }

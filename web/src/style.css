@@ -1,114 +1,31 @@
-:root {
-  color: #14261d;
-  background: #f4f7f5;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+/* Базовая прозрачность для WebView */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+    overflow: hidden;
+    /* Отключаем выделение текста */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
-* {
-  box-sizing: border-box;
+#prank-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* По умолчанию пропускаем клики сквозь WebView */
+    pointer-events: none;
 }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  min-height: 100dvh;
-}
-
-.demo-screen {
-  width: min(100%, 430px);
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding: max(24px, env(safe-area-inset-top)) 20px 48px;
-}
-
-.eyebrow {
-  color: #5e7168;
-  font-size: 13px;
-}
-
-h1 {
-  margin: 6px 0 24px;
-}
-
-.balance-card {
-  display: grid;
-  gap: 8px;
-  padding: 24px;
-  border-radius: 28px;
-  background: linear-gradient(135deg, #d9f8e7, #c8ecee);
-}
-
-.balance-card strong {
-  font-size: 32px;
-}
-
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 18px;
-}
-
-button,
-.feed article {
-  min-height: 70px;
-  padding: 16px;
-  border: 0;
-  border-radius: 20px;
-  background: white;
-  box-shadow: 0 8px 28px rgb(20 38 29 / 8%);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-}
-
-#replay-demo {
-  grid-column: 1 / -1;
-  background: #15a064;
-  color: white;
-  text-align: center;
-}
-
-.feed {
-  display: grid;
-  gap: 12px;
-  margin-top: 18px;
-}
-
-#cat-animation-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  width: 100%;
-  height: 100%;
-  height: 100dvh;
-  pointer-events: none;
-  touch-action: none;
-}
-
-@media (max-width: 360px) {
-  .demo-screen {
-    padding-inline: 14px;
-  }
-
-  .balance-card {
-    padding: 20px;
-    border-radius: 22px;
-  }
-
-  .action-grid,
-  .feed {
-    gap: 9px;
-  }
-}
-
-@media (orientation: landscape) and (max-height: 500px) {
-  .demo-screen {
-    padding-top: max(12px, env(safe-area-inset-top));
-  }
-
-  .feed {
-    grid-template-columns: repeat(3, 1fr);
-  }
+/* Для отладки: если в URL есть ?test=true, красим фон */
+body.debug-mode {
+    background: rgba(255, 0, 0, 0.2) !important;
 }
