@@ -161,8 +161,8 @@ export class CatAnimationRenderer {
     const frame = frames[yarn.variant % frames.length];
     const size = layout.yarnHeight * yarn.scale;
 
-    // ОТКЛЮЧАЕМ СГЛАЖИВАНИЕ ДЛЯ КЛУБКОВ (убирает захват соседних пикселей)
-    this.context.imageSmoothingEnabled = false;
+    // ВОЗВРАЩАЕМ СГЛАЖИВАНИЕ (так как соседи больше не мешают)
+    this.context.imageSmoothingEnabled = true;
 
     this.drawSprite(
       this.images.yarnVariants,
@@ -170,7 +170,7 @@ export class CatAnimationRenderer {
       yarn.x * this.width,
       yarn.y * this.height,
       size,
-      yarn.rotation,
+      0,
       yarn.opacity
     );
   }
@@ -236,27 +236,29 @@ export class CatAnimationRenderer {
 
     context.save();
     context.globalAlpha = opacity;
-    context.translate(centerX, centerY);
-    context.rotate(rotation);
 
-    // ЖЕСТКАЯ ПРИВЯЗКА К ПИКСЕЛЯМ АТЛАСА
-    const inset = 1; // Отступаем ровно 1 пиксель от края
-    const sx = Math.floor(frame.x) + inset;
-    const sy = Math.floor(frame.y) + inset;
-    const sw = Math.floor(frame.width) - (inset * 2);
-    const sh = Math.floor(frame.height) - (inset * 2);
+    context.translate(Math.round(centerX), Math.round(centerY));
+    if (rotation !== 0) context.rotate(rotation);
+
+    // ДОБАВЛЯЕМ 1 ПИКСЕЛЬ ПРОЗРАЧНОГО ЗАПАСА (expand)
+    const expand = 1;
+    const sx = frame.x - expand;
+    const sy = frame.y - expand;
+    const sw = frame.width + (expand * 2);
+    const sh = frame.height + (expand * 2);
+
+    // Убираем Math.round для ширины/высоты, чтобы масштабирование было плавным
+    const drawW = targetWidth;
+    const drawH = targetHeight;
+    const drawX = -drawW / 2;
+    const drawY = -drawH / 2;
 
     context.drawImage(
       image,
-      sx,
-      sy,
-      sw,
-      sh,
-      -targetWidth / 2,
-      -targetHeight / 2,
-      targetWidth,
-      targetHeight
+      sx, sy, sw, sh,
+      drawX, drawY, drawW, drawH
     );
+
     context.restore();
   }
 
