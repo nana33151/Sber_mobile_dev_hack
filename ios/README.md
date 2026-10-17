@@ -21,6 +21,10 @@ ios/
 
 Откройте `ios/PrankDemoHost/PrankDemoHost.xcodeproj`, схема `PrankDemoHost`, любой iPhone-симулятор.
 
+Демо собирает исходники `PrankLinker/Sources/PrankLinker` как статический фреймворк внутри своего
+проекта — так проект стабильно открывается и собирается в Xcode без резолва Swift-пакета.
+В СберKids линкер подключается как Swift Package (`ios/PrankLinker`).
+
 - **Тряска:** в симуляторе Device → Shake (⌃⌘Z), на телефоне — потрясти.
 - **Наклон в симуляторе:** стрелки или WASD на клавиатуре Mac (I/O → Keyboard → Connect Hardware Keyboard).
 - **Демо-режим для жюри:** в схеме поменяйте аргумент `-prankDemo NO` на `-prankDemo YES`. Прикол перестаёт закрываться

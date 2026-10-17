@@ -4,3 +4,4 @@ DerivedData/
 .swiftpm/
 *.xcuserstate
 Package.resolved
+.DS_Store
