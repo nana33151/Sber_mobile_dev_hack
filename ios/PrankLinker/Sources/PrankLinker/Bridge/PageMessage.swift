@@ -31,8 +31,10 @@ public enum PageMessage: Equatable, Sendable {
             object = nested
         }
         let params = object["params"] as? [String: Any] ?? [:]
+        // Игра шлёт `{ event: "action", data: { action: "cat_caught" } }` — поля могут лежать в `data`.
+        let data = object["data"] as? [String: Any] ?? [:]
         func string(_ key: String) -> String? {
-            nonEmpty(object[key]) ?? nonEmpty(params[key])
+            nonEmpty(object[key]) ?? nonEmpty(params[key]) ?? nonEmpty(data[key])
         }
 
         if let event = string("event") {

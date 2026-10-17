@@ -16,11 +16,15 @@ public struct PrankContent: Sendable, Equatable {
     /// Стартовая страница внутри папки игры, относительный путь. Для `.inline` всегда `index.html`.
     /// Позволяет взять общую папку `web/` и открыть в ней нужную страницу, не копируя файлы.
     public let entry: String
+    /// Папка статики, как `publicDir` у Vite: если файла нет рядом со стартовой страницей,
+    /// он ищется здесь. Так игра из `web/` запускается из исходников, без сборки.
+    public let publicDirectory: String?
 
-    public init(payload: PrankPayload, source: Source = .inline, entry: String = "index.html") {
+    public init(payload: PrankPayload, source: Source = .inline, entry: String = "index.html", publicDirectory: String? = nil) {
         self.payload = payload
         self.source = source
         self.entry = Self.isSafeEntry(entry) ? entry : "index.html"
+        self.publicDirectory = publicDirectory.flatMap { Self.isSafeEntry($0) ? $0 : nil }
     }
 
     /// Только относительный путь внутри папки: без `..`, без схемы и абсолютных путей.

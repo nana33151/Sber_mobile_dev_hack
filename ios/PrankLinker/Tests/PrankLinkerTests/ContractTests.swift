@@ -98,6 +98,12 @@ final class PageMessageTests: XCTestCase {
         XCTAssertEqual(try PageMessage.parse(["data": ["type": "VIBRATION_EVENT"]]).get(), .vibration)
     }
 
+    func testParsesGameMessageWithDataObject() {
+        // Формат игры из web/src/prank.js: JSON-строка `{ event, data }`.
+        let body = #"{"event":"action","data":{"action":"cat_caught","catId":"cat-1"}}"#
+        XCTAssertEqual(try PageMessage.parse(body).get(), .action(payloadID: nil, action: "cat_caught"))
+    }
+
     func testReportsInvalidMessages() {
         XCTAssertEqual(PageMessage.parse(42), .failure(.notAnObject))
         XCTAssertEqual(PageMessage.parse(["type": "PAY_EVENT"]), .failure(.unknown("PAY_EVENT")))
@@ -118,6 +124,25 @@ final class SchemeHandlerTests: XCTestCase {
     func testInjectsIntoFragmentWithoutTags() {
         let page = PrankSchemeHandler.page(for: PrankPayload(id: "a", html: "<p>x</p>", css: "p{}", js: "go()"))
         XCTAssertEqual(page, "<style>p{}</style><p>x</p><script>go()</script>")
+    }
+
+    func testPublicDirectoryFallbackLikeVite() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root.appendingPathComponent("src"), withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: root.appendingPathComponent("assets"), withIntermediateDirectories: true)
+        try Data("{}".utf8).write(to: root.appendingPathComponent("assets/atlas.json"))
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let content = PrankContent(
+            payload: PrankPayload(id: "game", html: ""),
+            source: .directory(root),
+            entry: "src/index.html",
+            publicDirectory: "assets"
+        )
+        XCTAssertEqual(content.entry, "src/index.html")
+        XCTAssertEqual(content.publicDirectory, "assets")
+        XCTAssertEqual(PrankContent(payload: content.payload, entry: "../x.html").entry, "index.html")
+        XCTAssertNil(PrankContent(payload: content.payload, publicDirectory: "../etc").publicDirectory)
     }
 
     func testSniffsMimeTypeOfExtensionlessAssets() {

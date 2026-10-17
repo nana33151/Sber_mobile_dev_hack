@@ -1,4 +1,5 @@
 import UIKit
+import WebKit
 
 /// Точка входа для приложения: связывает СберKids с JS-приколом.
 ///
@@ -37,6 +38,10 @@ public final class PrankLinker {
         /// Что показать, если игра не запустилась (ошибка загрузки, таймаут, падение до первого кадра).
         /// `nil` — ничего не показывать, только событие `.failed`.
         public var launchFailureAnimation: PrankFallbackAnimation?
+        /// `action` страницы, на которые даём лёгкую вибрацию (игра: котик поймал клубок).
+        public var hapticActions: Set<String> = ["cat_caught"]
+        /// `action`, означающие победу: приложение получает `.completed`, прикол плавно закрывается.
+        public var completionActions: Set<String> = ["game_won"]
 
         public init() {}
     }
@@ -63,6 +68,8 @@ public final class PrankLinker {
     private weak var scene: UIWindowScene?
     private var presenter: PrankPresenter?
     private var fallbackPresenter: PrankFallbackPresenter?
+    /// Разогретый WebKit: первый запуск WebView холодный (~2 с) и не укладывается в таймаут показа.
+    private var warmupWebView: WKWebView?
     private var loadingTask: Task<Void, Never>?
     private var delayTimer: Timer?
     private var breaker: CircuitBreaker
@@ -93,6 +100,21 @@ public final class PrankLinker {
     public func attach(to scene: UIWindowScene) {
         self.scene = scene
         updateShakeDetector()
+        scheduleWarmup()
+    }
+
+    /// Поднимаем процессы WebKit заранее, но не во время запуска: главный экран не замедляем.
+    private func scheduleWarmup() {
+        guard warmupWebView == nil else { return }
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            guard let self, self.warmupWebView == nil, self.presenter == nil else { return }
+            let configuration = WKWebViewConfiguration()
+            configuration.websiteDataStore = .nonPersistent()
+            let webView = WKWebView(frame: .zero, configuration: configuration)
+            webView.loadHTMLString("<!doctype html><script type=\"module\">window.ok = 1;</script>", baseURL: nil)
+            self.warmupWebView = webView
+        }
     }
 
     /// Загружает конфиг. Ошибка не бросается: прикол просто выключается до следующей загрузки.
@@ -293,24 +315,35 @@ public final class PrankLinker {
                 presenter?.close(.manual)
             case .action(_, let action):
                 emit(.action(payloadID: payloadID, action: action))
+                if options.hapticActions.contains(action) {
+                    vibrate()
+                }
+                if options.completionActions.contains(action) {
+                    complete(payloadID: payloadID)
+                    presenter?.close(.manual)
+                }
             case .error(let code, let text):
                 emit(.pageError(payloadID: payloadID, code: code, message: text))
             case .finish:
                 emit(.finished(payloadID: payloadID))
             case .completed:
-                // По контракту канала — один раз за показ.
-                guard !hasCompleted else {
-                    emit(.ignoredMessage("COMPLETED_EVENT повторно"))
-                    return
-                }
-                hasCompleted = true
-                emit(.completed(payloadID: payloadID))
+                complete(payloadID: payloadID)
             case .vibration:
                 vibrate()
             case .sharing(let text, let image):
                 emit(.shareRequested(payloadID: payloadID, text: text, image: image))
             }
         }
+    }
+
+    /// По контракту канала `COMPLETED` — один раз за показ.
+    private func complete(payloadID: String) {
+        guard !hasCompleted else {
+            emit(.ignoredMessage("COMPLETED повторно"))
+            return
+        }
+        hasCompleted = true
+        emit(.completed(payloadID: payloadID))
     }
 
     private func vibrate() {

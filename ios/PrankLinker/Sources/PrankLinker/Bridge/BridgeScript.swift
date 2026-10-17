@@ -8,6 +8,21 @@ import WebKit
 enum BridgeScript {
 
     static let handlerName = "prankLinker"
+    /// Канал, которым шлёт события сама игра: `webkit.messageHandlers.prankBridge.postMessage(json)`.
+    static let gameHandlerName = "prankBridge"
+
+    /// Прозрачный оверлей: фон страницы и всё, кроме canvas (например, заглушка «экран приложения»
+    /// для превью в браузере), не рисуем — под игрой должно быть видно приложение.
+    @MainActor static var transparentOverlayStyle: WKUserScript {
+        WKUserScript(source: """
+        (function () {
+          var style = document.createElement('style');
+          style.textContent = 'html, body { background: transparent !important; } ' +
+            'body > :not(canvas):not(script):not(style) { display: none !important; }';
+          (document.head || document.documentElement).appendChild(style);
+        })();
+        """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+    }
 
     @MainActor static var userScript: WKUserScript {
         WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
@@ -105,9 +120,23 @@ enum BridgeScript {
           try { window.dispatchEvent(new CustomEvent('prank:hide', { detail: { reason: reason } })); } catch (_) {}
         },
         // Наклон: x вправо, y вниз, в долях g (-1…1). Нативная сторона шлёт ~60 раз в секунду.
+        // Дублируем стандартным `deviceorientation` (gamma/beta в градусах): игры, написанные под браузер,
+        // работают без изменений, а системный запрос разрешения на датчики не нужен.
         tilt: function (x, y) {
           window.PrankTilt.x = x; window.PrankTilt.y = y;
           window.dispatchEvent(new CustomEvent('prank:tilt', { detail: { x: x, y: y } }));
+          var gamma = Math.asin(Math.max(-1, Math.min(1, x))) * 180 / Math.PI;
+          var beta = Math.asin(Math.max(-1, Math.min(1, y))) * 180 / Math.PI;
+          var orientation;
+          try {
+            orientation = new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: beta, gamma: gamma, absolute: false });
+          } catch (_) {
+            orientation = new Event('deviceorientation');
+            Object.defineProperty(orientation, 'alpha', { value: 0 });
+            Object.defineProperty(orientation, 'beta', { value: beta });
+            Object.defineProperty(orientation, 'gamma', { value: gamma });
+          }
+          window.dispatchEvent(orientation);
         }
       };
     })();

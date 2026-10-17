@@ -5,7 +5,7 @@ import XCTest
 /// Прогоняет настоящий линкер с настоящим WKWebView внутри демо-приложения:
 /// мок-игра и все сценарии сбоев из `Pranks/`. Главное, что проверяем, — приложение
 /// не падает, оверлей убирается, а приложение получает понятное событие.
-/// Как в приложении: `cats_yarn` — страница `web/native-demo` поверх общего JS-рендера.
+/// Как в приложении: `cats_yarn` — игра из `web/src`, статика из `web/assets`.
 private struct GameContentProvider: PrankContentProvider {
     let root: URL
     let web: URL
@@ -17,7 +17,7 @@ private struct GameContentProvider: PrankContentProvider {
     func loadContent(payloadID: String) async throws -> PrankContent {
         let content = try await DirectoryContentProvider(root: root).loadContent(payloadID: payloadID)
         guard payloadID == "cats_yarn" else { return content }
-        return PrankContent(payload: content.payload, source: .directory(web), entry: "native-demo/index.html")
+        return PrankContent(payload: content.payload, source: .directory(web), entry: "src/index.html", publicDirectory: "assets")
     }
 }
 

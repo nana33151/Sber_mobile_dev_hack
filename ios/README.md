@@ -88,55 +88,50 @@ linker.screenAllowsPranks = false
 | Переходы наружу, `window.open`, `alert` | Блокируются |
 | Уход в фон, нехватка памяти, запрещённый экран | Прикол закрывается |
 
-## Контракт для JS-разработчика
+## Игра в линкере
 
-Страница грузится по `prank://payload/index.html`, ссылки на свои файлы — относительные.
-Прикол-папка: `index.html` + `payload.json` (поля `payload_schema.json` без `html`).
-Стартовую страницу можно задать (`PrankContent.entry`) — так демо открывает общую папку `web/`
-без копий: игра `cats_yarn` = `web/native-demo/index.html` (физика клубков) поверх рендера
-`web/src` (`window.CatAnimation`) и спрайтов `web/assets`. Схема `prank://` отдаёт файлы с CORS,
-поэтому работают `<script type="module">`, `import()` и `fetch()`.
+Игра — `web/` из main, без сборки и без копий: демо кладёт папку `web/` в приложение целиком,
+линкер открывает `web/src/index.html` (`PrankContent.entry`), а статику ищет в `web/assets`
+(`PrankContent.publicDirectory`, как `publicDir` у Vite: `src/atlas.json` → `assets/atlas.json`).
+Схема `prank://` отдаёт файлы с CORS, поэтому работают `<script type="module">`, `import()` и `fetch()`.
 
-Если `window.PrankBridge` объявляется модулем, линкер ждёт его до 1,5 с. Не дождался — в лог уходит
-`NO_BRIDGE`. Ошибки загрузки ресурсов (`RESOURCE`) и `console.error` (`CONSOLE`) тоже приходят
-приложению как `pageError`.
+Что линкер делает за игру:
 
-Приложение → страница (линкер вызывает после загрузки):
+| Игре нужно | Линкер |
+|---|---|
+| `deviceorientation` (gamma/beta) | Шлёт синтетические события из CoreMotion (или джойстика в симуляторе). Разрешение на датчики не нужно |
+| `webkit.messageHandlers.prankBridge.postMessage(json)` | Принимает `{ event, data }`, как и `postMessage` страницы |
+| `action: cat_caught` | Лёгкая вибрация (`Options.hapticActions`) |
+| `action: game_won` | `.completed` приложению, прикол плавно закрывается (`Options.completionActions`) |
+| Прозрачный оверлей | Фон страницы и всё, кроме `<canvas>` (заглушка «экран SberKids» для браузера), скрыты |
+| Холодный WebKit | Прогревается через 1,5 с после `attach`, чтобы первый показ уложился в 2 с |
 
-```js
-window.PrankBridge = {
-  init(config) { /* PrankConfig */ return Promise.resolve(); },
-  show(payload) { /* метаданные payload; резолвить после первого кадра */ },
-  hide(id) { /* остановить анимации */ },
-  on(event, cb) {},
-  getVersion() { return "1"; }
-};
-```
+`window.PrankBridge` из модуля линкер ждёт до 1,5 с, иначе — `NO_BRIDGE` в лог. Ошибки ресурсов
+(`RESOURCE`) и `console.error` (`CONSOLE`) приходят приложению как `pageError`.
 
-Если `PrankBridge` не объявлен, линкер считает страницу показанной после первого кадра.
+Правка в игре: `cat-animation.js` отправлял `cat-animation:dance-complete` без `bubbles`, а
+`game-engine.js` слушает его на `window` — `game_won` не приходил. Добавлен `{ bubbles: true }`.
 
-Наклон (страница сама датчики не читает — в WKWebView для этого нужен жест, а касание закрывает прикол):
+### Общий контракт страницы
 
-```js
-window.addEventListener('prank:tilt', e => { e.detail.x; e.detail.y }); // −1…1, x вправо, y вниз
-// или читать window.PrankTilt.x / .y в игровом цикле
-```
+Приложение → страница: `window.PrankBridge.init(config)`, `show(payload)` (резолвить после первого
+кадра), `hide(id)`; наклон — `deviceorientation` и `prank:tilt` (`{ x, y }` в долях g).
 
 Страница → приложение:
 
 ```js
-window.postMessage({ event: "action", payload_id: "cats_yarn", action: "pet" }, "*");
+window.webkit.messageHandlers.prankBridge.postMessage(JSON.stringify({ event: "action", data: { action: "cat_caught" } }));
 window.postMessage({ event: "error", code: "INTERNAL", message: "..." }, "*");
 window.postMessage({ type: "VIBRATION_EVENT" }, "*");   // лёгкий тактильный отклик
 window.postMessage({ type: "COMPLETED_EVENT" }, "*");   // один раз за показ
-window.postMessage({ type: "FINISH_EVENT" }, "*");
 window.postMessage({ type: "CLOSE_EVENT" }, "*");       // закрыть прикол
 ```
 
-## Открытые вопросы по контракту
+## Открытые вопросы
 
-- `prank:tilt` и вызовы `PrankBridge` из натива в `PrankEngine_Bridge_v1.md` не описаны — нужен PR в main.
-- Атласы в `source/` (~3,6 МБ PNG) — для бюджета 6 МБ стоит ужать до размеров на экране.
-- `duration_ms` максимум 60 000 — хватит ли на раунд игры.
-- `background` по умолчанию `opaque`, для оверлея нужен `transparent` (в моке так и стоит).
+- Зимой (дек–фев) игра грузит `atlas_winter.json`, которого в `web/assets` нет → игра не запустится,
+  сыграет нативный котик-заглушка. Нужен зимний атлас.
+- `game-engine.js`: коты могут появиться друг на друге (нет проверки дистанции между котами).
+- В `atlas.json` к краям некоторых клубков попадают пиксели соседних кадров (тонкие полоски).
+- `lottie-web` в `web/package.json` — внешняя библиотека; в коде не используется, лучше убрать.
 - Триггер `tap` конфликтует с «касание закрывает»: сейчас это касание элемента-якоря (`linker.handleTap()`).

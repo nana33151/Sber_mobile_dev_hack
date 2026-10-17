@@ -75,7 +75,12 @@ final class PrankPresenter: NSObject {
         let handler = PrankSchemeHandler(content: {
             switch content.source {
             case .inline: .payload(payload)
-            case .directory(let url): .directory(url)
+            case .directory(let url):
+                .directory(
+                    url,
+                    entryDirectory: (content.entry as NSString).deletingLastPathComponent,
+                    publicDirectory: content.publicDirectory
+                )
             }
         }())
         schemeHandler = handler
@@ -88,6 +93,10 @@ final class PrankPresenter: NSObject {
         configuration.setURLSchemeHandler(handler, forURLScheme: PrankSchemeHandler.scheme)
         configuration.userContentController.addUserScript(BridgeScript.userScript)
         configuration.userContentController.add(WeakScriptMessageHandler(self), name: BridgeScript.handlerName)
+        configuration.userContentController.add(WeakScriptMessageHandler(self), name: BridgeScript.gameHandlerName)
+        if payload.background == .transparent {
+            configuration.userContentController.addUserScript(BridgeScript.transparentOverlayStyle)
+        }
 
         let webView = WKWebView(frame: scene.coordinateSpace.bounds, configuration: configuration)
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -172,6 +181,7 @@ final class PrankPresenter: NSObject {
             webView.navigationDelegate = nil
             webView.uiDelegate = nil
             webView.configuration.userContentController.removeScriptMessageHandler(forName: BridgeScript.handlerName)
+            webView.configuration.userContentController.removeScriptMessageHandler(forName: BridgeScript.gameHandlerName)
             webView.removeFromSuperview()
         }
         webView = nil
@@ -307,7 +317,8 @@ final class PrankPresenter: NSObject {
 
 extension PrankPresenter: WKScriptMessageHandler {
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == BridgeScript.handlerName, state == .loading || state == .showing else { return }
+        guard message.name == BridgeScript.handlerName || message.name == BridgeScript.gameHandlerName,
+              state == .loading || state == .showing else { return }
         onMessage?(message.body)
     }
 }

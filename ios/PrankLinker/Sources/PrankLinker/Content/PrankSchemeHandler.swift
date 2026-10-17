@@ -18,7 +18,8 @@ final class PrankSchemeHandler: NSObject, WKURLSchemeHandler {
 
     enum Content {
         case payload(PrankPayload)
-        case directory(URL)
+        /// Папка игры; `entryDirectory` и `publicDirectory` — для поиска статики как у Vite `publicDir`.
+        case directory(URL, entryDirectory: String = "", publicDirectory: String? = nil)
     }
 
     private let content: Content
@@ -70,13 +71,22 @@ final class PrankSchemeHandler: NSObject, WKURLSchemeHandler {
             guard let data = payload.assets[key] else { return nil }
             return (data, Self.mimeType(forPath: key, data: data))
 
-        case .directory(let root):
-            let root = root.standardizedFileURL
-            let file = root.appendingPathComponent(path).standardizedFileURL
-            // Никаких выходов за пределы папки пакета.
-            guard file.path.hasPrefix(root.path + "/"), let data = try? Data(contentsOf: file) else { return nil }
-            return (data, Self.mimeType(forPath: file.lastPathComponent, data: data))
+        case .directory(let root, let entryDirectory, let publicDirectory):
+            if let found = Self.read(path, in: root) { return found }
+            // Как Vite publicDir: `src/atlas.json` → `assets/atlas.json`.
+            guard let publicDirectory else { return nil }
+            let prefix = entryDirectory.isEmpty ? "" : entryDirectory + "/"
+            guard path.hasPrefix(prefix) else { return nil }
+            return Self.read(publicDirectory + "/" + path.dropFirst(prefix.count), in: root)
         }
+    }
+
+    private static func read(_ path: String, in root: URL) -> (Data, String)? {
+        let root = root.standardizedFileURL
+        let file = root.appendingPathComponent(path).standardizedFileURL
+        // Никаких выходов за пределы папки пакета.
+        guard file.path.hasPrefix(root.path + "/"), let data = try? Data(contentsOf: file) else { return nil }
+        return (data, mimeType(forPath: file.lastPathComponent, data: data))
     }
 
     /// Собирает страницу: `css` — в `<head>`, `js` — в конец `<body>`.
