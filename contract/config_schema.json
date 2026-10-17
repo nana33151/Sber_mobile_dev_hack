@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sber-hack/prank/config_schema.json",
+  "title": "PrankConfig",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": "1" },
+    "enabled": { "type": "boolean", "default": true },
+    "trigger": {
+      "type": "object",
+      "required": ["on", "payload_id"],
+      "additionalProperties": false,
+      "properties": {
+        "on":         { "enum": ["tap", "shake", "delay", "manual"] },
+        "payload_id": { "type": "string" },
+        "delay_ms":   { "type": "integer", "minimum": 0, "maximum": 60000 }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sber-hack/prank/payload_schema.json",
+  "title": "PrankPayload",
+  "description": "Один оверлей-прикол. Нативная оболочка рендерит его поверх экрана.",
+  "type": "object",
+  "required": ["version", "id", "html"],
+  "additionalProperties": false,
+  "properties": {
+    "version":     { "const": "1" },
+    "id":          { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "title":       { "type": "string", "maxLength": 120 },
+    "html":        { "type": "string", "maxLength": 200000 },
+    "css":         { "type": "string", "maxLength": 50000 },
+    "js":          { "type": "string", "maxLength": 50000 },
+    "assets": {
+      "type": "object",
+      "description": "Бинарные вложения по имени. В HTML доступны как assets/<key>.",
+      "additionalProperties": { "type": "string", "contentEncoding": "base64" },
+      "maxProperties": 20
+    },
+    "duration_ms": { "type": "integer", "minimum": 500, "maximum": 60000, "default": 5000 },
+    "dismissible": { "type": "boolean", "default": true },
+    "background":  { "type": "string", "enum": ["transparent", "dim", "opaque"], "default": "opaque" }
+  }
+}
