@@ -7,12 +7,12 @@ import {
   normalizeScene
 } from "../src/animation-core.js";
 
-test("dance uses four frames across 1.6 seconds", () => {
+test("dance cycles quickly through four frames", () => {
   assert.equal(danceFrameIndex(0, 1600), 0);
-  assert.equal(danceFrameIndex(400, 1600), 1);
-  assert.equal(danceFrameIndex(800, 1600), 2);
-  assert.equal(danceFrameIndex(1200, 1600), 3);
-  assert.equal(danceFrameIndex(1600, 1600), 3);
+  assert.equal(danceFrameIndex(140, 1600), 1);
+  assert.equal(danceFrameIndex(280, 1600), 2);
+  assert.equal(danceFrameIndex(420, 1600), 3);
+  assert.equal(danceFrameIndex(560, 1600), 0);
 });
 
 test("layout adapts to portrait and landscape phones", () => {
