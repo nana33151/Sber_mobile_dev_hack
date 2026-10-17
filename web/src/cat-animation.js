@@ -156,31 +156,12 @@ export class CatAnimationRenderer {
     }
   }
 
-  // drawYarn(yarn, layout) {
-  //   const frames = this.atlas.yarnVariants.frames;
-  //   const frame = frames[yarn.variant % frames.length];
-  //   const size = layout.yarnHeight * yarn.scale;
-  //
-  //   // ОТКЛЮЧАЕМ СГЛАЖИВАНИЕ ДЛЯ КЛУБКОВ (убирает захват соседних пикселей)
-  //   this.context.imageSmoothingEnabled = false;
-  //
-  //   this.drawSprite(
-  //     this.images.yarnVariants,
-  //     frame,
-  //     yarn.x * this.width,
-  //     yarn.y * this.height,
-  //     size,
-  //     yarn.rotation,
-  //     yarn.opacity
-  //   );
-  // }
-
   drawYarn(yarn, layout) {
     const frames = this.atlas.yarnVariants.frames;
     const frame = frames[yarn.variant % frames.length];
     const size = layout.yarnHeight * yarn.scale;
 
-    // Отключаем сглаживание для клубков
+    // ОТКЛЮЧАЕМ СГЛАЖИВАНИЕ ДЛЯ КЛУБКОВ (убирает захват соседних пикселей)
     this.context.imageSmoothingEnabled = false;
 
     this.drawSprite(
@@ -189,10 +170,29 @@ export class CatAnimationRenderer {
       yarn.x * this.width,
       yarn.y * this.height,
       size,
-      0, // Принудительно ставим 0, чтобы избежать багов Canvas при повороте
+      yarn.rotation,
       yarn.opacity
     );
   }
+
+  // drawYarn(yarn, layout) {
+  //   const frames = this.atlas.yarnVariants.frames;
+  //   const frame = frames[yarn.variant % frames.length];
+  //   const size = layout.yarnHeight * yarn.scale;
+  //
+  //   // Отключаем сглаживание для клубков
+  //   this.context.imageSmoothingEnabled = false;
+  //
+  //   this.drawSprite(
+  //     this.images.yarnVariants,
+  //     frame,
+  //     yarn.x * this.width,
+  //     yarn.y * this.height,
+  //     size,
+  //     0, // Принудительно ставим 0, чтобы избежать багов Canvas при повороте
+  //     yarn.opacity
+  //   );
+  // }
 
   drawCat(cat, time, layout) {
     // ВКЛЮЧАЕМ СГЛАЖИВАНИЕ ДЛЯ КОТОВ (чтобы они были плавными)
@@ -229,37 +229,6 @@ export class CatAnimationRenderer {
     );
   }
 
-  // drawSprite(image, frame, centerX, centerY, targetHeight, rotation, opacity) {
-  //   const ratio = frame.width / frame.height;
-  //   const targetWidth = targetHeight * ratio;
-  //   const context = this.context;
-  //
-  //   context.save();
-  //   context.globalAlpha = opacity;
-  //   context.translate(centerX, centerY);
-  //   context.rotate(rotation);
-  //
-  //   // ЖЕСТКАЯ ПРИВЯЗКА К ПИКСЕЛЯМ АТЛАСА
-  //   const inset = 1; // Отступаем ровно 1 пиксель от края
-  //   const sx = Math.floor(frame.x) + inset;
-  //   const sy = Math.floor(frame.y) + inset;
-  //   const sw = Math.floor(frame.width) - (inset * 2);
-  //   const sh = Math.floor(frame.height) - (inset * 2);
-  //
-  //   context.drawImage(
-  //     image,
-  //     sx,
-  //     sy,
-  //     sw,
-  //     sh,
-  //     -targetWidth / 2,
-  //     -targetHeight / 2,
-  //     targetWidth,
-  //     targetHeight
-  //   );
-  //   context.restore();
-  // }
-
   drawSprite(image, frame, centerX, centerY, targetHeight, rotation, opacity) {
     const ratio = frame.width / frame.height;
     const targetWidth = targetHeight * ratio;
@@ -267,32 +236,63 @@ export class CatAnimationRenderer {
 
     context.save();
     context.globalAlpha = opacity;
+    context.translate(centerX, centerY);
+    context.rotate(rotation);
 
-    // Округляем позицию
-    context.translate(Math.round(centerX), Math.round(centerY));
-    if (rotation !== 0) context.rotate(rotation);
-
-    // УВЕЛИЧЕННЫЙ ОТСТУП (6 пикселей)
-    const inset = 6;
+    // ЖЕСТКАЯ ПРИВЯЗКА К ПИКСЕЛЯМ АТЛАСА
+    const inset = 1; // Отступаем ровно 1 пиксель от края
     const sx = Math.floor(frame.x) + inset;
     const sy = Math.floor(frame.y) + inset;
     const sw = Math.floor(frame.width) - (inset * 2);
     const sh = Math.floor(frame.height) - (inset * 2);
 
-    // ОКРУГЛЯЕМ РАЗМЕР И КООРДИНАТЫ ОТРИСОВКИ
-    const drawW = Math.round(targetWidth);
-    const drawH = Math.round(targetHeight);
-    const drawX = Math.round(-drawW / 2);
-    const drawY = Math.round(-drawH / 2);
-
     context.drawImage(
       image,
-      sx, sy, sw, sh,
-      drawX, drawY, drawW, drawH
+      sx,
+      sy,
+      sw,
+      sh,
+      -targetWidth / 2,
+      -targetHeight / 2,
+      targetWidth,
+      targetHeight
     );
-
     context.restore();
   }
+
+  // drawSprite(image, frame, centerX, centerY, targetHeight, rotation, opacity) {
+  //   const ratio = frame.width / frame.height;
+  //   const targetWidth = targetHeight * ratio;
+  //   const context = this.context;
+  //
+  //   context.save();
+  //   context.globalAlpha = opacity;
+  //
+  //   // Округляем позицию
+  //   context.translate(Math.round(centerX), Math.round(centerY));
+  //   if (rotation !== 0) context.rotate(rotation);
+  //
+  //   // УВЕЛИЧЕННЫЙ ОТСТУП (6 пикселей)
+  //   const inset = 6;
+  //   const sx = Math.floor(frame.x) + inset;
+  //   const sy = Math.floor(frame.y) + inset;
+  //   const sw = Math.floor(frame.width) - (inset * 2);
+  //   const sh = Math.floor(frame.height) - (inset * 2);
+  //
+  //   // ОКРУГЛЯЕМ РАЗМЕР И КООРДИНАТЫ ОТРИСОВКИ
+  //   const drawW = Math.round(targetWidth);
+  //   const drawH = Math.round(targetHeight);
+  //   const drawX = Math.round(-drawW / 2);
+  //   const drawY = Math.round(-drawH / 2);
+  //
+  //   context.drawImage(
+  //     image,
+  //     sx, sy, sw, sh,
+  //     drawX, drawY, drawW, drawH
+  //   );
+  //
+  //   context.restore();
+  // }
 
   drawParticles() {
     const context = this.context;
