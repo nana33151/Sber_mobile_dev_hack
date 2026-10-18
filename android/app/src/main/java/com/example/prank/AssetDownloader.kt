@@ -9,23 +9,25 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
-/**
- * Скачивает ассеты с CDN в фоне. Атомарная запись через tmp-директорию.
- * Если что-то пошло не так — старая версия на диске остаётся, assets — fallback.
- */
 class AssetDownloader(
     private val context: Context,
     private val manifest: Manifest,
 ) {
     private val rootDir = File(context.filesDir, "prank_cache")
 
-    /**
-     * Возвращает true, если удалось скачать новую версию и она встала на место.
-     * true → следующий PrankOverlay.attach() будет читать с диска.
-     */
     suspend fun updateIfNeeded(): Boolean = withContext(Dispatchers.IO) {
         val baseUrl = manifest.cdnBaseUrl ?: return@withContext false
-        val remoteVersion = manifest.cdnVersion ?: return@withContext false
+
+        val remoteManifest = downloadJson("$baseUrl/manifest.json") ?: run {
+            Log.d("AssetDownloader", "remote manifest unreachable")
+            return@withContext false
+        }
+        val remoteVersion = remoteManifest.optString("currentVersion", "")
+            .ifBlank { remoteManifest.optJSONObject("cdn")?.optString("currentVersion", "") ?: "" }
+        if (remoteVersion.isBlank()) {
+            Log.w("AssetDownloader", "remote manifest has no currentVersion")
+            return@withContext false
+        }
 
         val currentLatest = rootDir.listFiles()
             ?.filter { it.isDirectory && it.name.startsWith("v") }
@@ -33,7 +35,7 @@ class AssetDownloader(
             ?.name
 
         if (currentLatest == "v$remoteVersion") {
-            Log.d("AssetDownloader", "already at v$remoteVersion, skip")
+            Log.d("AssetDownloader", "up to date at v$remoteVersion")
             return@withContext false
         }
 
@@ -42,30 +44,32 @@ class AssetDownloader(
         tmpDir.mkdirs()
 
         try {
-            // 1. Скачать манифест CDN: baseUrl/manifest.json
-            val remoteManifest = downloadJson("$baseUrl/manifest.json")
-                ?: return@withContext false
+            File(tmpDir, "manifest.json").writeText(remoteManifest.toString())
 
-            // 2. Скачать все файлы, на которые он ссылается
-            val filesToFetch = mutableSetOf("atlas.json")
-            remoteManifest.getJSONObject("variants").let { v ->
-                v.keys().forEach { k -> filesToFetch.add(v.getJSONObject(k).getString("atlas")) }
+            val atlasFiles = mutableSetOf<String>()
+            remoteManifest.optJSONObject("variants")?.let { v ->
+                v.keys().forEach { k -> atlasFiles.add(v.getJSONObject(k).getString("atlas")) }
             }
-            // + PNG: разбираем atlas → имена
-            val atlasJson = downloadText("$baseUrl/atlas.json") ?: return@withContext false
-            JSONObject(atlasJson).let { root ->
-                listOf("catStates", "catDance", "yarnVariants").forEach { key ->
-                    filesToFetch.add(root.getJSONObject(key).getString("image"))
+            if (atlasFiles.isEmpty()) atlasFiles.add("atlas.json")
+
+            val pngFiles = mutableSetOf<String>()
+            for (atlasName in atlasFiles) {
+                val atlasText = downloadText("$baseUrl/$atlasName") ?: return@withContext false
+                File(tmpDir, atlasName).writeText(atlasText)
+                JSONObject(atlasText).let { root ->
+                    listOf("catStates", "catDance", "yarnVariants").forEach { key ->
+                        pngFiles.add(root.getJSONObject(key).getString("image"))
+                    }
                 }
             }
-            filesToFetch.forEach { name ->
-                if (!downloadToFile("$baseUrl/$name", File(tmpDir, name))) {
-                    Log.w("AssetDownloader", "skip $name (network fail)")
+
+            for (png in pngFiles) {
+                if (!downloadToFile("$baseUrl/$png", File(tmpDir, png))) {
+                    Log.w("AssetDownloader", "skip $png (network fail)")
                     return@withContext false
                 }
             }
 
-            // 3. Атомарно поставить на место
             val finalDir = File(rootDir, "v$remoteVersion")
             finalDir.deleteRecursively()
             if (!tmpDir.renameTo(finalDir)) {
@@ -73,7 +77,6 @@ class AssetDownloader(
                 return@withContext false
             }
 
-            // 4. Удалить старые версии (оставить только текущую)
             rootDir.listFiles()?.filter {
                 it.isDirectory && it.name.startsWith("v") && it.name != "v$remoteVersion"
             }?.forEach { it.deleteRecursively() }

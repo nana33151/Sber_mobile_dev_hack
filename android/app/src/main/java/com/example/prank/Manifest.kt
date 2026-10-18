@@ -1,10 +1,12 @@
 package com.example.prank
 
 import org.json.JSONObject
+import java.util.Calendar
 
 data class Manifest(
     val defaultVariant: String,
-    val variants: Map<String, String>,   // variant -> atlas file name
+    val activeVariant: String?,
+    val variants: Map<String, String>,
     val cdnBaseUrl: String?,
     val cdnVersion: String?,
 ) {
@@ -20,15 +22,19 @@ data class Manifest(
             val cdn = root.optJSONObject("cdn")
             return Manifest(
                 defaultVariant = root.optString("defaultVariant", "default"),
+                activeVariant = root.optString("activeVariant", "").takeIf { it.isNotBlank() },
                 variants = variants,
                 cdnBaseUrl = cdn?.optString("baseUrl")?.takeIf { it.isNotBlank() },
                 cdnVersion = cdn?.optString("currentVersion")?.takeIf { it.isNotBlank() },
             )
         }
 
-        /** Выбор variant по дате (для демо — зима/лето). */
         fun pickVariant(manifest: Manifest): String {
-            val month = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH) + 1
+            manifest.activeVariant
+                ?.takeIf { manifest.variants.containsKey(it) }
+                ?.let { return it }
+
+            val month = Calendar.getInstance().get(Calendar.MONTH) + 1
             return when {
                 month in listOf(12, 1, 2) && manifest.variants.containsKey("winter") -> "winter"
                 else -> manifest.defaultVariant

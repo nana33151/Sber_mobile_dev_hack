@@ -1,43 +1,61 @@
 package com.example.prank
 
 import android.content.Context
-import android.util.Log
 import java.io.File
+import java.io.InputStream
 
-/**
- * Решает, откуда читать ассет:
- *  1. disk (скачано с CDN, свежая версия)
- *  2. assets (bundled, всегда работает)
- */
+interface AssetSource {
+    fun open(fileName: String): InputStream?
+    fun exists(fileName: String): Boolean
+}
+
+class AssetsSource(
+    private val context: Context,
+    private val basePath: String,
+) : AssetSource {
+    override fun open(fileName: String): InputStream? = try {
+        context.assets.open("$basePath/$fileName")
+    } catch (_: Throwable) { null }
+
+    override fun exists(fileName: String): Boolean =
+        try { context.assets.open("$basePath/$fileName").close(); true }
+        catch (_: Throwable) { false }
+}
+
+class DiskSource(private val dir: File) : AssetSource {
+    override fun open(fileName: String): InputStream? = try {
+        File(dir, fileName).takeIf { it.exists() }?.inputStream()
+    } catch (_: Throwable) { null }
+
+    override fun exists(fileName: String): Boolean = File(dir, fileName).exists()
+}
+
 class AssetResolver(
     context: Context,
     config: PrankConfig,
 ) {
+    private val appContext = context.applicationContext
     private val assetsSource = AssetsSource(context, "${config.assetPath}/assets")
-    private val diskSource: DiskSource? = resolveDiskSource(context)
+    private val cacheRoot = File(appContext.filesDir, "prank_cache")
 
-    private fun resolveDiskSource(context: Context): DiskSource? {
-        val root = File(context.filesDir, "prank_cache")
-        if (!root.exists() || !root.isDirectory) return null
-        // ищем самую свежую версию: prank_cache/v<N>/...
-        val latest = root.listFiles()
+    private fun currentDiskSource(): DiskSource? {
+        val latest = cacheRoot.listFiles()
             ?.filter { it.isDirectory && it.name.startsWith("v") }
             ?.maxByOrNull { it.name.removePrefix("v").toIntOrNull() ?: 0 }
             ?: return null
         return if (latest.listFiles()?.isNotEmpty() == true) DiskSource(latest) else null
     }
 
-    fun open(fileName: String): java.io.InputStream? {
-        diskSource?.open(fileName)?.let { return it }
+    fun open(fileName: String): InputStream? {
+        currentDiskSource()?.open(fileName)?.let { return it }
         return assetsSource.open(fileName)
     }
 
     fun exists(fileName: String): Boolean =
-        (diskSource?.exists(fileName) == true) || assetsSource.exists(fileName)
+        currentDiskSource()?.exists(fileName) == true || assetsSource.exists(fileName)
 
-    /** Для отладки: пишет в лог, откуда читается файл. */
     fun describe(fileName: String): String = when {
-        diskSource?.exists(fileName) == true -> "disk"
+        currentDiskSource()?.exists(fileName) == true -> "disk"
         assetsSource.exists(fileName) -> "assets"
         else -> "missing"
     }

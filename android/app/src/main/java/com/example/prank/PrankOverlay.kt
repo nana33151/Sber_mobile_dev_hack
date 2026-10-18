@@ -19,21 +19,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
-/**
- * Overlay-обёртка над PrankGameView (Canvas-рендер).
- *
- * Отвечает за:
- *  - create PrankGameView, addView в WindowManager
- *  - загрузку manifest.json + выбранного variant атласа (disk → assets)
- *  - фоновое обновление с CDN (не блокирует первый показ)
- *  - переключение alpha на Shown
- *  - destroy view + removeView + stop TiltForwarder
- *
- * НЕ решает:
- *  - когда показать (триггер в host)
- *  - какой payload (PrankPresets / host)
- *  - когда закрыть (exit-policy в host)
- */
 class PrankOverlay(
     private val context: Context,
     private val windowManager: WindowManager,
@@ -102,7 +87,6 @@ class PrankOverlay(
         tiltForwarder = TiltForwarder(context) { beta, gamma -> gv.setTilt(beta, gamma) }
             .also { it.start() }
 
-        // Прокидываем события: Shown переключает alpha локально, остальное — host'у
         scope.launch {
             gv.events.collect { event ->
                 if (event is PrankEvent.Shown) gv.alpha = 1f
@@ -110,32 +94,30 @@ class PrankOverlay(
             }
         }
 
-        // Загрузка manifest + atlas (асинхронно)
         scope.launch { loadAtlasAndStart() }
     }
 
     private suspend fun loadAtlasAndStart() {
-        // 1. Локальный manifest из assets (bundled fallback)
         val localManifest = withContext(Dispatchers.IO) {
             try {
-                val path = "${config.assetPath}/assets/manifest.json"
-                context.assets.open(path).bufferedReader().use { it.readText() }
-                    .let { Manifest.parse(it) }
+                assetResolver.open("manifest.json")
+                    ?.bufferedReader()?.use { it.readText() }
+                    ?.let { Manifest.parse(it) }
             } catch (t: Throwable) {
-                Log.w("PrankOverlay", "manifest.json not found, using defaults", t)
+                Log.w("PrankOverlay", "manifest parse failed", t)
                 null
             }
         }
         manifest = localManifest
+        Log.d("PrankOverlay", "manifest loaded: variants=${localManifest?.variants?.keys}, cdn=${localManifest?.cdnBaseUrl}")
 
-        // 2. Фоновое обновление с CDN (не блокирует показ)
         if (localManifest?.cdnBaseUrl != null) {
             scope.launch(Dispatchers.IO) {
                 try {
                     val updated = AssetDownloader(context, localManifest).updateIfNeeded()
                     if (updated) {
                         SpriteCache.clearIfNeeded()
-                        Log.d("PrankOverlay", "assets updated via CDN")
+                        Log.d("PrankOverlay", "assets updated via CDN, will apply on next shake")
                     }
                 } catch (t: Throwable) {
                     Log.w("PrankOverlay", "CDN update failed", t)
@@ -143,7 +125,6 @@ class PrankOverlay(
             }
         }
 
-        // 3. Выбор variant + загрузка atlas
         val variant = localManifest?.let { Manifest.pickVariant(it) } ?: "default"
         val atlasFile = localManifest?.variants?.get(variant) ?: "atlas.json"
         Log.d("PrankOverlay", "loading atlas: variant=$variant file=$atlasFile")
@@ -151,14 +132,12 @@ class PrankOverlay(
         val atlas = withContext(Dispatchers.IO) {
             val text = assetResolver.open(atlasFile)?.bufferedReader()?.use { it.readText() }
             if (text == null) {
-                Log.e("PrankOverlay", "atlas $atlasFile not found in disk or assets")
+                Log.e("PrankOverlay", "atlas $atlasFile not found")
                 null
             } else {
-                try {
-                    Atlas.parse(text)
-                } catch (t: Throwable) {
-                    Log.e("PrankOverlay", "atlas parse failed", t)
-                    null
+                try { Atlas.parse(text) }
+                catch (t: Throwable) {
+                    Log.e("PrankOverlay", "atlas parse failed", t); null
                 }
             }
         }
