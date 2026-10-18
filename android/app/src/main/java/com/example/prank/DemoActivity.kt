@@ -92,27 +92,27 @@ class DemoActivity : AppCompatActivity() {
 
         // ─── ВАРИАНТ 1: цветной плейсхолдер (работает без ресурсов) ───
         // Когда добавятся скрины — закомментируй этот блок и раскомментируй ВАРИАНТ 2.
-        val color = when (screen) {
-            "home"    -> Color.parseColor("#21A038")
-            "payment" -> Color.parseColor("#F5F5F5")
-            "profile" -> Color.parseColor("#E8EAF0")
-            else      -> Color.GRAY
-        }
-        background.setImageDrawable(
-            GradientDrawable().apply { setColor(color) }
-        )
+        //val color = when (screen) {
+         //   "home"    -> Color.parseColor("#21A038")
+         //   "payment" -> Color.parseColor("#F5F5F5")
+         //   "profile" -> Color.parseColor("#E8EAF0")
+        //    else      -> Color.GRAY
+        //}
+        //background.setImageDrawable(
+        //    GradientDrawable().apply { setColor(color) }
+        //)
 
-        // ─── ВАРИАНТ 2: реальные скрины банка ───
+         //─── ВАРИАНТ 2: реальные скрины банка ───
         // Раскомментируй, когда положишь PNG в android/app/src/main/res/drawable/:
         //   demo_screen_home.png, demo_screen_payment.png, demo_screen_profile.png
         //
-        // val resId = when (screen) {
-        //     "home"    -> R.drawable.demo_screen_home
-        //     "payment" -> R.drawable.demo_screen_payment
-        //     "profile" -> R.drawable.demo_screen_profile
-        //     else      -> R.drawable.demo_screen_home
-        // }
-        // background.setImageResource(resId)
+         val resId = when (screen) {
+             "home"    -> R.drawable.demo_screen_home
+             "payment" -> R.drawable.demo_screen_payment
+             "profile" -> R.drawable.demo_screen_profile
+             else      -> R.drawable.demo_screen_home
+         }
+         background.setImageResource(resId)
 
 	title.text = when (screen) {
 	    "home"    -> "Главная (игра: котики с клубками)"

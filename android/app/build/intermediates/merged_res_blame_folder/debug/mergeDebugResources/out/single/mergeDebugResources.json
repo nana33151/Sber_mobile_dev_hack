@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "com.example.prank.app-debug-24:/drawable_design_tasks.jpg.flat",
+        "source": "com.example.prank.app-main-26:/drawable/design_tasks.jpg"
+    },
+    {
+        "merged": "com.example.prank.app-debug-24:/drawable_demo_screen_home.jpg.flat",
+        "source": "com.example.prank.app-main-26:/drawable/demo_screen_home.jpg"
+    },
+    {
+        "merged": "com.example.prank.app-debug-24:/drawable_design_piggy.jpg.flat",
+        "source": "com.example.prank.app-main-26:/drawable/design_piggy.jpg"
+    },
+    {
+        "merged": "com.example.prank.app-debug-24:/drawable_demo_screen_payment.jpg.flat",
+        "source": "com.example.prank.app-main-26:/drawable/demo_screen_payment.jpg"
+    },
+    {
+        "merged": "com.example.prank.app-debug-24:/drawable_demo_screen_profile.png.flat",
+        "source": "com.example.prank.app-main-26:/drawable/demo_screen_profile.png"
+    }
+]
