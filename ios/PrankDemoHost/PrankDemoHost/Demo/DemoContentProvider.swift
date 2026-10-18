@@ -9,9 +9,9 @@ final class DemoContentProvider: PrankContentProvider, @unchecked Sendable {
         var errorDescription: String? { "Имитация: игра не загрузилась (нет сети)" }
     }
 
-    /// Тестовый CDN: папка ассетов игры в публичном репозитории. Поменяли картинку или атлас
-    /// в `main` — приложение подхватит их без пересборки (сначала в фоне докачает в кеш).
-    static let testCDN = URL(string: "https://raw.githubusercontent.com/nana33151/Sber_mobile_dev_hack/main/web/assets/")!
+    /// CDN с ассетами из `main`. Поменяли картинку или атлас в репозитории — приложение
+    /// подхватит их без пересборки (сначала в фоне докачает и атомарно заменит кеш).
+    static let testCDN = URL(string: "https://cdn.statically.io/gh/nana33151/Sber_mobile_dev_hack@main/web/assets/")!
 
     /// Кеш ассетов нативной игры; запасной вариант — `web/assets` внутри сборки.
     let assetCache: PrankAssetCache

@@ -74,6 +74,11 @@ final class NativeGameSession: PrankSession {
             // Тот же формат, что у JS-игры: линкер обрабатывает его одинаково (вибрация, «пройдено»).
             self?.onMessage?(["event": "action", "data": ["action": action]])
         }
+        gameView.onVictoryStarted = { [weak self] in
+            // `duration_ms` ограничивает игру, но не должен обрывать уже начавшийся финал.
+            self?.durationTimer?.invalidate()
+            self?.durationTimer = nil
+        }
         root.view.addSubview(gameView)
         self.gameView = gameView
 

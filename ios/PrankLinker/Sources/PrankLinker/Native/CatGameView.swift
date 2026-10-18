@@ -11,6 +11,8 @@ final class CatGameView: UIView {
 
     /// `cat_caught`, `game_won` — те же действия, что шлёт JS-игра.
     var onAction: ((String) -> Void)?
+    /// Нативная сессия использует этот сигнал, чтобы таймаут показа не оборвал финальный танец.
+    var onVictoryStarted: (() -> Void)?
 
     private struct Cat {
         let id: Int
@@ -44,7 +46,7 @@ final class CatGameView: UIView {
     private var calibration: CGPoint?
     private var displayLink: CADisplayLink?
     private var lastTimestamp: CFTimeInterval = 0
-    private var danceStartedAt: CFTimeInterval?
+    private var danceCompletion: DispatchWorkItem?
     private var isPlaying = false
     private var catHeight: CGFloat = 120
     private var yarnHeight: CGFloat = 46
@@ -68,6 +70,9 @@ final class CatGameView: UIView {
     func start() {
         layoutIfNeeded()
         generateLevel()
+        lastTimestamp = 0
+        danceCompletion?.cancel()
+        danceCompletion = nil
         isPlaying = true
         calibration = nil
         tiltSource.start()
@@ -79,9 +84,12 @@ final class CatGameView: UIView {
 
     func stop() {
         isPlaying = false
+        danceCompletion?.cancel()
+        danceCompletion = nil
         displayLink?.invalidate()
         displayLink = nil
         tiltSource.stop()
+        cats.forEach { $0.layer.removeAllAnimations() }
     }
 
     override func layoutSubviews() {
@@ -155,15 +163,6 @@ final class CatGameView: UIView {
         let frames = lastTimestamp == 0 ? 1 : CGFloat(min(max((now - lastTimestamp) * 60, 0), 3))
         lastTimestamp = now
 
-        if let started = danceStartedAt {
-            render(danceElapsed: now - started)
-            if (now - started) * 1000 >= atlas.danceDurationMs {
-                danceStartedAt = nil
-                stop()
-                onAction?("game_won")
-            }
-            return
-        }
         guard isPlaying else { return }
 
         let tilt = currentTilt()
@@ -182,12 +181,51 @@ final class CatGameView: UIView {
         }
         separateYarns()
         catchYarns()
-        render()
 
         if yarns.allSatisfy(\.isCaught) {
-            isPlaying = false
-            danceStartedAt = now
+            beginVictoryDance()
+            return
         }
+        render()
+    }
+
+    /// Переключаем игру в победу атомарно: первый кадр танца появляется в том же кадре,
+    /// в котором пойман последний клубок. Раньше сначала отрисовывались статичные котики,
+    /// а общий таймер оверлея мог успеть закрыть сессию до следующего кадра.
+    private func beginVictoryDance() {
+        guard danceCompletion == nil, !atlas.danceFrames.isEmpty else { return }
+        isPlaying = false
+        displayLink?.invalidate()
+        displayLink = nil
+        tiltSource.stop()
+        onVictoryStarted?()
+        render(danceElapsed: 0)
+
+        // Финал проигрывает Core Animation независимо от игрового CADisplayLink. Это важно:
+        // остановка физики после последнего клубка больше не может остановить смену кадров танца.
+        let cycleFrames = atlas.danceFrames + [atlas.danceFrames[0]]
+        let cycleDuration = danceFrameInterval * CFTimeInterval(atlas.danceFrames.count)
+        // Keep the finale visible long enough to read as a dance, even if a remotely
+        // supplied atlas accidentally declares a very short duration.
+        let totalDuration = max(2.2, max(atlas.danceDurationMs / 1000, cycleDuration))
+        for cat in cats {
+            let animation = CAKeyframeAnimation(keyPath: "contents")
+            animation.values = cycleFrames
+            animation.calculationMode = .discrete
+            animation.duration = cycleDuration
+            animation.repeatDuration = totalDuration
+            animation.isRemovedOnCompletion = false
+            cat.layer.add(animation, forKey: "victory-dance")
+        }
+
+        let completion = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.danceCompletion = nil
+            self.stop()
+            self.onAction?("game_won")
+        }
+        danceCompletion = completion
+        DispatchQueue.main.asyncAfter(deadline: .now() + totalDuration, execute: completion)
     }
 
     /// Наклон как в JS: gamma/beta в градусах относительно положения в момент старта, /45°.

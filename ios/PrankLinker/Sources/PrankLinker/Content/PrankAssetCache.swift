@@ -139,14 +139,20 @@ public actor PrankAssetCache {
         try fileManager.createDirectory(at: staging, withIntermediateDirectories: true)
         defer { try? fileManager.removeItem(at: staging) }
 
-        let atlasData = try await fetch(remoteBase.appendingPathComponent(Self.atlasFileName))
+        // Ветка `@main` на CDN — изменяемый адрес. Минутный query не даёт edge-кешу
+        // бесконечно держать старого маскота, но и не создаёт новый URL на каждый запрос.
+        let revision = String(Int(Date().timeIntervalSince1970 / 60))
+        let atlasData = try await fetch(versioned(remoteBase.appendingPathComponent(Self.atlasFileName), revision: revision))
         try atlasData.write(to: staging.appendingPathComponent(Self.atlasFileName))
         let images = PrankAtlas.imageNames(in: atlasData)
         guard !images.isEmpty else { throw URLError(.cannotParseResponse) }
         // Картинки — параллельно: на медленной сети это в разы быстрее.
         try await withThrowingTaskGroup(of: (String, Data).self) { group in
             for name in images {
-                group.addTask { (name, try await self.fetch(remoteBase.appendingPathComponent(name))) }
+                group.addTask {
+                    let url = self.versioned(remoteBase.appendingPathComponent(name), revision: revision)
+                    return (name, try await self.fetch(url))
+                }
             }
             for try await (name, data) in group {
                 try data.write(to: staging.appendingPathComponent(name))
@@ -177,5 +183,16 @@ public actor PrankAssetCache {
         }
         guard !data.isEmpty else { throw URLError(.zeroByteResource) }
         return data
+    }
+
+    /// Query нужен только HTTP(S). `file://` остаётся без него для быстрых unit-тестов.
+    nonisolated private func versioned(_ url: URL, revision: String) -> URL {
+        guard url.scheme == "http" || url.scheme == "https",
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
+        var query = components.queryItems ?? []
+        query.removeAll { $0.name == "prank_asset_revision" }
+        query.append(URLQueryItem(name: "prank_asset_revision", value: revision))
+        components.queryItems = query
+        return components.url ?? url
     }
 }
