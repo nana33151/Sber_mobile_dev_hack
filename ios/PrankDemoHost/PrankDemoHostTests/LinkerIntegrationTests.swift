@@ -21,6 +21,22 @@ private struct GameContentProvider: PrankContentProvider {
     }
 }
 
+/// Нативная игра: тот же payload, ассеты — атлас на диске.
+private struct NativeContentProvider: PrankContentProvider {
+    let atlas: URL
+
+    func loadConfig() async throws -> Data {
+        Data(#"{"version":"1","trigger":{"on":"shake","payload_id":"cats_yarn"}}"#.utf8)
+    }
+
+    func loadContent(payloadID: String) async throws -> PrankContent {
+        PrankContent(
+            payload: PrankPayload(id: payloadID, html: "", durationMs: 60000, background: .transparent),
+            source: .native(atlas: atlas)
+        )
+    }
+}
+
 @MainActor
 final class LinkerIntegrationTests: XCTestCase {
 
@@ -178,6 +194,38 @@ final class LinkerIntegrationTests: XCTestCase {
         let failed = await waitFor(8) { if case .failed = $0 { true } else { false } }
         XCTAssertNotNil(failed)
         XCTAssertFalse(recorder.events.contains { if case .fallbackShown = $0 { true } else { false } })
+    }
+
+    func testNativeGameShowsWithoutWebView() async throws {
+        let atlas = try XCTUnwrap(Bundle.main.url(forResource: "atlas", withExtension: "json", subdirectory: "web/assets"))
+        let native = NativeContentProvider(atlas: atlas)
+        let linker = PrankLinker(content: native, tiltSource: ManualTiltSource())
+        linker.delegate = recorder
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        linker.attach(to: scene)
+        await linker.reloadConfig()
+
+        linker.show(payloadID: "cats_yarn")
+        let shown = await waitFor(2) { if case .shown = $0 { true } else { false } }
+        XCTAssertNotNil(shown, "\(recorder.events)")
+        XCTAssertTrue(linker.isShowing)
+        linker.hide()
+        let hidden = await waitFor(1) { if case .hidden(_, .manual) = $0 { true } else { false } }
+        XCTAssertNotNil(hidden)
+    }
+
+    func testNativeGameWithBrokenAtlasFailsLaunch() async throws {
+        let missing = FileManager.default.temporaryDirectory.appendingPathComponent("no-atlas/atlas.json")
+        let linker = PrankLinker(content: NativeContentProvider(atlas: missing), tiltSource: ManualTiltSource())
+        linker.delegate = recorder
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        linker.attach(to: scene)
+        await linker.reloadConfig()
+
+        linker.show(payloadID: "cats_yarn")
+        let failed = await waitFor(2) { if case .failed = $0 { true } else { false } }
+        XCTAssertNotNil(failed)
+        XCTAssertFalse(linker.isShowing)
     }
 
     func testSecondTriggerWhileShowingIsSkipped() async {

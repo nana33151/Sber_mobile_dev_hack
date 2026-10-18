@@ -1,29 +1,46 @@
 import Foundation
 import PrankLinker
 
-/// Приколы из папки `Pranks/` в сборке + переключатель «сломать загрузку игры»,
-/// чтобы на демо показать цепочку: тряска → игра не загрузилась → нативная анимация.
+/// Приколы из папки `Pranks/` в сборке + переключатели для демо:
+/// нативная игра или WebView, и «сломать загрузку игры» (тряска → сбой → котик-заглушка).
 final class DemoContentProvider: PrankContentProvider, @unchecked Sendable {
 
     struct SimulatedLoadFailure: LocalizedError {
         var errorDescription: String? { "Имитация: игра не загрузилась (нет сети)" }
     }
 
+    /// Тестовый CDN: папка ассетов игры в публичном репозитории. Поменяли картинку или атлас
+    /// в `main` — приложение подхватит их без пересборки (сначала в фоне докачает в кеш).
+    static let testCDN = URL(string: "https://raw.githubusercontent.com/nana33151/Sber_mobile_dev_hack/main/web/assets/")!
+
+    /// Кеш ассетов нативной игры; запасной вариант — `web/assets` внутри сборки.
+    let assetCache: PrankAssetCache
+    /// Откуда взялись ассеты последнего показа — для лога демо.
+    var onAssetsResolved: (@Sendable (PrankAssetCache.Origin) -> Void)?
+
     private let base: DirectoryContentProvider
-    /// Общая папка `web/` из репозитория, лежит в сборке целиком.
+    /// Игра из `web/` (только `src` и `assets`, кладутся в сборку скриптом).
     private let webRoot = Bundle.main.url(forResource: "web", withExtension: nil)
-    /// Игра с котиками из `web/` (main): исходники как есть, статика — из `web/assets` (как Vite publicDir).
-    private let gameEntries = ["cats_yarn": "src/index.html"]
+    private let gameIDs: Set<String> = ["cats_yarn"]
     private let lock = NSLock()
     private var _failsLoading = false
+    private var _usesNativeGame = true
 
     init(root: URL) {
         base = DirectoryContentProvider(root: root)
+        let bundledAssets = Bundle.main.bundleURL.appendingPathComponent("web/assets", isDirectory: true)
+        assetCache = PrankAssetCache(remoteBase: Self.testCDN, bundledDirectory: bundledAssets)
     }
 
     var failsLoading: Bool {
         get { lock.withLock { _failsLoading } }
         set { lock.withLock { _failsLoading = newValue } }
+    }
+
+    /// Нативная игра на Swift (по умолчанию) или JS-игра в WebView.
+    var usesNativeGame: Bool {
+        get { lock.withLock { _usesNativeGame } }
+        set { lock.withLock { _usesNativeGame = newValue } }
     }
 
     func loadConfig() async throws -> Data {
@@ -37,9 +54,14 @@ final class DemoContentProvider: PrankContentProvider, @unchecked Sendable {
             throw SimulatedLoadFailure()
         }
         let content = try await base.loadContent(payloadID: payloadID)
-        if let entry = gameEntries[payloadID], let webRoot {
-            return PrankContent(payload: content.payload, source: .directory(webRoot), entry: entry, publicDirectory: "assets")
+        guard gameIDs.contains(payloadID) else { return content }
+
+        if usesNativeGame {
+            let resolved = await assetCache.resolve()
+            onAssetsResolved?(resolved.origin)
+            return PrankContent(payload: content.payload, source: .native(atlas: resolved.atlasURL))
         }
-        return content
+        guard let webRoot else { return content }
+        return PrankContent(payload: content.payload, source: .directory(webRoot), entry: "src/index.html", publicDirectory: "assets")
     }
 }

@@ -9,6 +9,8 @@ public struct PrankContent: Sendable, Equatable {
         /// Папка с игрой на диске (например, скачанная с CDN и закэшированная).
         /// Входная точка — `index.html`, ссылки между файлами относительные.
         case directory(URL)
+        /// Нативная игра на Swift, без WebView. URL — `atlas.json` на диске (кеш или сборка).
+        case native(atlas: URL)
     }
 
     public let payload: PrankPayload

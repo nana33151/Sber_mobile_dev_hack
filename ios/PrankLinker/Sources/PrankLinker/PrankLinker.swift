@@ -68,7 +68,7 @@ public final class PrankLinker {
     private let content: any PrankContentProvider
     public var options: Options
     private weak var scene: UIWindowScene?
-    private var presenter: PrankPresenter?
+    private var presenter: (any PrankSession)?
     private var fallbackPresenter: PrankFallbackPresenter?
     /// Разогретый WebKit: первый запуск WebView холодный (~2 с) и не укладывается в таймаут показа.
     private var warmupWebView: WKWebView?
@@ -252,15 +252,21 @@ public final class PrankLinker {
             return
         }
 
-        let presenter = PrankPresenter(
-            content: content,
-            config: config ?? .disabled,
-            tiltSource: tiltSource,
-            shouldDismiss: { [weak self] point in
-                guard let options = self?.options else { return true }
-                return options.dismissesOnTouch && !(options.ignoresTouch?(point) ?? false)
-            }
-        )
+        let shouldDismiss: (CGPoint) -> Bool = { [weak self] point in
+            guard let options = self?.options else { return true }
+            return options.dismissesOnTouch && !(options.ignoresTouch?(point) ?? false)
+        }
+        let presenter: any PrankSession
+        if case .native(let atlasURL) = content.source {
+            presenter = NativeGameSession(content: content, atlasURL: atlasURL, tiltSource: tiltSource, shouldDismiss: shouldDismiss)
+        } else {
+            presenter = PrankPresenter(
+                content: content,
+                config: config ?? .disabled,
+                tiltSource: tiltSource,
+                shouldDismiss: shouldDismiss
+            )
+        }
         var wasShown = false
         presenter.onShown = { [weak self] in
             wasShown = true
