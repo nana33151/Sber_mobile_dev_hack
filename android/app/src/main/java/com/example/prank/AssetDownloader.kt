@@ -44,7 +44,6 @@ class AssetDownloader(
         tmpDir.mkdirs()
 
         try {
-            File(tmpDir, "manifest.json").writeText(remoteManifest.toString())
 
             val atlasFiles = mutableSetOf<String>()
             remoteManifest.optJSONObject("variants")?.let { v ->
