@@ -77,7 +77,10 @@ final class PrankSchemeHandler: NSObject, WKURLSchemeHandler {
             guard let publicDirectory else { return nil }
             let prefix = entryDirectory.isEmpty ? "" : entryDirectory + "/"
             guard path.hasPrefix(prefix) else { return nil }
-            return Self.read(publicDirectory + "/" + path.dropFirst(prefix.count), in: root)
+            let rest = String(path.dropFirst(prefix.count))
+            // `src/assets/atlas.json` (сборка Vite кладёт статику в `assets/`) → `assets/atlas.json`.
+            if rest.hasPrefix(publicDirectory + "/"), let found = Self.read(rest, in: root) { return found }
+            return Self.read(publicDirectory + "/" + rest, in: root)
         }
     }
 

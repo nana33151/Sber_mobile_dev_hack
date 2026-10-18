@@ -338,6 +338,11 @@ public final class PrankLinker {
                 }
             case .error(let code, let text):
                 emit(.pageError(payloadID: payloadID, code: code, message: text))
+                // Ошибка до первого кадра — игра не запустилась: вместо пустого оверлея — заглушка.
+                // Ошибки модулей и console.error в процессе загрузки не считаем: игра может их пережить.
+                if !["CONSOLE", "RESOURCE", "NO_BRIDGE"].contains(code) {
+                    presenter?.failLaunchIfLoading(.internalError("\(code): \(text)"))
+                }
             case .finish:
                 emit(.finished(payloadID: payloadID))
             case .completed:
