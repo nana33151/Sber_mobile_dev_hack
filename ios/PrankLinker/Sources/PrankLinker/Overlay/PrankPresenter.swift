@@ -166,6 +166,12 @@ final class PrankPresenter: NSObject {
         finish(.hidden(reason))
     }
 
+    /// Страница сама сообщила, что не смогла запуститься (до первого кадра) — это провал запуска.
+    func failLaunchIfLoading(_ error: PrankError) {
+        guard state == .loading else { return }
+        fail(error)
+    }
+
     private func fail(_ error: PrankError) {
         finish(.failed(error))
     }
