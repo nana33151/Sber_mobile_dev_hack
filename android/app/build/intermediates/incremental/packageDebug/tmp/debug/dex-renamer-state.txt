@@ -1,4 +1,4 @@
-#Sun Oct 18 11:21:57 MSK 2026
+#Sun Oct 18 12:25:03 MSK 2026
 base.0=/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/build/intermediates/dex/debug/mergeExtDexDebug/classes.dex
 base.1=/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/build/intermediates/dex/debug/mergeProjectDexDebug/0/classes.dex
 base.2=/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/build/intermediates/dex/debug/mergeProjectDexDebug/12/classes.dex
