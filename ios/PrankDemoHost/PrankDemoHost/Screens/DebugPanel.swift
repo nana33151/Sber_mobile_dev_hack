@@ -21,6 +21,13 @@ struct DebugPanel: View {
                         .disabled(!DesignImages.areAvailable)
                 }
 
+                Section(header: Text("Игра и кеш ассетов"), footer: Text(demo.cacheStatus)) {
+                    Toggle("Нативная игра (Swift)", isOn: $demo.usesNativeGame)
+                    Button("Обновить кеш с CDN") { demo.updateCache() }
+                    Button("Очистить кеш", role: .destructive) { demo.clearCache() }
+                }
+                .task { await demo.refreshCacheStatus() }
+
                 Section(header: Text("Приколы и тесты сбоев")) {
                     ForEach(DemoController.payloadIDs, id: \.self) { id in
                         Button(id) { closeThen { demo.linker.show(payloadID: id) } }

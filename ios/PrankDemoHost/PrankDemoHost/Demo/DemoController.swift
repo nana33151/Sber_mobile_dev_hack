@@ -25,6 +25,12 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
     /// Экраны из макета Figma (картинки) или самодельный главный экран.
     @Published var usesDesignScreens = DesignImages.areAvailable
     /// Имитировать ошибку загрузки игры: тряска → сбой → танцующий котик.
+    /// Игра нативно на Swift или JS в WebView — для сравнения на демо.
+    @Published var usesNativeGame = true {
+        didSet { content.usesNativeGame = usesNativeGame }
+    }
+    @Published private(set) var cacheStatus = "—"
+
     @Published var failsGameLoading = false {
         didSet { content.failsLoading = failsGameLoading }
     }
@@ -64,6 +70,17 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
         linker = PrankLinker(content: content, options: options)
         #endif
         linker.delegate = self
+        // Кеш ассетов наполняем заранее, в фоне: первый показ берёт картинки с диска, а не ждёт сеть.
+        let cache = content.assetCache
+        Task {
+            if await !cache.hasCachedPack { await cache.refresh() }
+        }
+        content.onAssetsResolved = { [weak self] origin in
+            Task { @MainActor in
+                self?.append("Ассеты игры: \(origin.rawValue)")
+                await self?.refreshCacheStatus()
+            }
+        }
         linker.options.ignoresTouch = { [weak self] point in
             guard let self else { return false }
             return [self.joystickFrame, self.blurButtonFrame].contains { frame in
@@ -84,6 +101,35 @@ final class DemoController: ObservableObject, PrankLinkerDelegate {
     }
 
     var isSimulator: Bool { manualTilt != nil }
+
+    // MARK: Кеш ассетов
+
+    func refreshCacheStatus() async {
+        let cache = content.assetCache
+        let hasPack = await cache.hasCachedPack
+        let origin = await cache.lastOrigin
+        let refreshed = await cache.lastRefresh
+        var parts = [hasPack ? "в кеше есть пакет" : "кеш пуст"]
+        if let origin { parts.append("последний показ: \(origin.rawValue)") }
+        if let refreshed { parts.append("обновлён \(refreshed.formatted(date: .omitted, time: .standard))") }
+        cacheStatus = parts.joined(separator: " · ")
+    }
+
+    func updateCache() {
+        Task {
+            let ok = await content.assetCache.refresh()
+            append(ok ? "Кеш обновлён с CDN" : "CDN недоступен — кеш не изменился", problem: !ok)
+            await refreshCacheStatus()
+        }
+    }
+
+    func clearCache() {
+        Task {
+            await content.assetCache.clear()
+            append("Кеш ассетов очищен")
+            await refreshCacheStatus()
+        }
+    }
 
     func clearLog() {
         log.removeAll()

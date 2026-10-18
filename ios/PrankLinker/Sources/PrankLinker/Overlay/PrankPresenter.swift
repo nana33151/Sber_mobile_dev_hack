@@ -77,7 +77,7 @@ final class PrankPresenter: NSObject {
         let payload = content.payload
         let handler = PrankSchemeHandler(content: {
             switch content.source {
-            case .inline: .payload(payload)
+            case .inline, .native: .payload(payload)
             case .directory(let url):
                 .directory(
                     url,
