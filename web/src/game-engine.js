@@ -112,6 +112,7 @@ export class GameEngine {
                 x: spawnX,
                 y: spawnY,
                 variant: Math.floor(Math.random() * 8), // 8 вариантов клубков
+                rotation: Math.random() * Math.PI * 2,
                 isCaught: false
             });
         }
@@ -131,6 +132,9 @@ export class GameEngine {
 
         // 1. Физика движения клубков
         activeYarns.forEach(yarn => {
+            const previousX = yarn.x;
+            const previousY = yarn.y;
+
             // Смещаем клубки с учетом наклона
             const dx = this.tilt.x * 0.012;
             const dy = this.tilt.y * 0.012;
@@ -141,6 +145,16 @@ export class GameEngine {
             // Жестко ограничиваем координаты (чтобы не улетали за экран)
             yarn.x = Math.max(0.05, Math.min(0.95, yarn.x));
             yarn.y = Math.max(0.05, Math.min(0.95, yarn.y));
+
+            // Кадр клубка вращается пропорционально реальному пути по экрану:
+            // он визуально катится, а не просто скользит вслед за наклоном.
+            const k = this.aspect();
+            const traveledX = (yarn.x - previousX) * k.x;
+            const traveledY = (yarn.y - previousY) * k.y;
+            const direction = Math.abs(traveledX) >= Math.abs(traveledY)
+                ? Math.sign(traveledX || 1)
+                : Math.sign(traveledY || 1);
+            yarn.rotation += (Math.hypot(traveledX, traveledY) / this.yarnBodyRadius) * direction;
         });
 
         // 1б. Клубки сталкиваются друг с другом, а не слипаются

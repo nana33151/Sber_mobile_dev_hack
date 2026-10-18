@@ -1,5 +1,6 @@
 export const DANCE_FRAME_COUNT = 4;
 export const DEFAULT_DANCE_DURATION_MS = 1600;
+export const DANCE_FRAME_INTERVAL_MS = 140;
 
 export function clamp(value, min, max) {
   const numeric = Number(value);
@@ -9,8 +10,8 @@ export function clamp(value, min, max) {
 
 export function danceFrameIndex(elapsedMs, durationMs = DEFAULT_DANCE_DURATION_MS) {
   const safeDuration = Math.max(1, Number(durationMs) || DEFAULT_DANCE_DURATION_MS);
-  const progress = clamp(Number(elapsedMs) / safeDuration, 0, 0.999999);
-  return Math.floor(progress * DANCE_FRAME_COUNT);
+  const elapsed = clamp(Number(elapsedMs), 0, safeDuration);
+  return Math.floor(elapsed / DANCE_FRAME_INTERVAL_MS) % DANCE_FRAME_COUNT;
 }
 
 export function computeLayout(width, height, catCount) {
