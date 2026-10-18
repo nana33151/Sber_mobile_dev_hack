@@ -1,2 +1,7 @@
 R_DEF: Internal format may change without notice
 local
+drawable demo_screen_home
+drawable demo_screen_payment
+drawable demo_screen_profile
+drawable design_piggy
+drawable design_tasks
