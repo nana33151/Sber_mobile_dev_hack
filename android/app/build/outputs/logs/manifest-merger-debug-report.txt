@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:2:1-40:12
-INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:2:1-40:12
-INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:2:1-40:12
-INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:2:1-40:12
+ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:2:1-42:12
+INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:2:1-42:12
+INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:2:1-42:12
+INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:2:1-42:12
 MERGED from [androidx.appcompat:appcompat-resources:1.7.0] /home/yana/.gradle/caches/transforms-4/798af3a1e59d185521eb9f51ce7c0065/transformed/appcompat-resources-1.7.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.appcompat:appcompat:1.7.0] /home/yana/.gradle/caches/transforms-4/2a521f8f95c27d1d2e4e908a75207c20/transformed/appcompat-1.7.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.fragment:fragment:1.5.4] /home/yana/.gradle/caches/transforms-4/422b86553824c77484bf8019fc4ee5a0/transformed/fragment-1.5.4/AndroidManifest.xml:17:1-24:12
@@ -67,8 +67,8 @@ ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app
 	android:name
 		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:9:22-64
 application
-ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:11:5-39:19
-INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:11:5-39:19
+ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:11:5-41:19
+INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:11:5-41:19
 MERGED from [androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.core:core:1.13.0] /home/yana/.gradle/caches/transforms-4/5bd166b9af37491df9943c6a0ec9aa20/transformed/core-1.13.0/AndroidManifest.xml:28:5-89
@@ -91,42 +91,44 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/yana/
 		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:12:9-35
 	android:theme
 		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:14:9-59
+	android:usesCleartextTraffic
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:15:9-44
 activity#com.example.prank.MainActivity
-ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:17:9-24:20
+ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:19:9-26:20
 	android:exported
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:19:13-36
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:21:13-36
 	android:name
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:18:13-41
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:20:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:20:13-23:29
+ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:22:13-25:29
 action#android.intent.action.MAIN
-ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:21:17-69
+ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:23:17-69
 	android:name
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:21:25-66
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:23:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:22:17-77
+ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:24:17-77
 	android:name
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:22:27-74
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:24:27-74
 activity#com.example.prank.DemoActivity
-ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:27:9-29:40
+ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:29:9-31:40
 	android:exported
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:29:13-37
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:31:13-37
 	android:name
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:28:13-41
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:30:13-41
 service#com.example.prank.PrankTriggerService
-ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:31:9-38:19
+ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:33:9-40:19
 	android:exported
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:33:13-37
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:35:13-37
 	android:foregroundServiceType
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:34:13-55
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:36:13-55
 	android:name
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:32:13-48
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:34:13-48
 property#android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE
-ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:35:13-37:49
+ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:37:13-39:49
 	android:value
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:37:17-46
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:39:17-46
 	android:name
-		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:36:17-76
+		ADDED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:38:17-76
 uses-sdk
 INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml

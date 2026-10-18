@@ -1,0 +1,8 @@
+{
+  "defaultVariant": "default",
+  "variants": { "default": { "atlas": "atlas.json" } },
+  "cdn": {
+    "baseUrl": "http://localhost:8080",
+    "currentVersion": "1"
+  }
+}

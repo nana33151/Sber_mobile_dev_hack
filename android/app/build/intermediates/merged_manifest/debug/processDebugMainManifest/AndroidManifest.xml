@@ -27,7 +27,8 @@
         android:debuggable="true"
         android:extractNativeLibs="false"
         android:label="Prank"
-        android:theme="@style/Theme.AppCompat.NoActionBar" >
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:usesCleartextTraffic="true" >
 
         <!-- Стартовый экран -->
         <activity

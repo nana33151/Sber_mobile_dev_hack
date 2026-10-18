@@ -39,7 +39,7 @@
 22-->[androidx.core:core:1.13.0] /home/yana/.gradle/caches/transforms-4/5bd166b9af37491df9943c6a0ec9aa20/transformed/core-1.13.0/AndroidManifest.xml:26:22-94
 23
 24    <application
-24-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:11:5-39:19
+24-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:11:5-41:19
 25        android:allowBackup="true"
 25-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:12:9-35
 26        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
@@ -48,117 +48,119 @@
 28        android:extractNativeLibs="false"
 29        android:label="Prank"
 29-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:13:9-30
-30        android:theme="@style/Theme.AppCompat.NoActionBar" >
+30        android:theme="@style/Theme.AppCompat.NoActionBar"
 30-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:14:9-59
-31
-32        <!-- Стартовый экран -->
-33        <activity
-33-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:17:9-24:20
-34            android:name="com.example.prank.MainActivity"
-34-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:18:13-41
-35            android:exported="true" >
-35-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:19:13-36
-36            <intent-filter>
-36-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:20:13-23:29
-37                <action android:name="android.intent.action.MAIN" />
-37-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:21:17-69
-37-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:21:25-66
-38
-39                <category android:name="android.intent.category.LAUNCHER" />
-39-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:22:17-77
-39-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:22:27-74
-40            </intent-filter>
-41        </activity>
-42
-43        <!-- Оставим как отладочный вариант полного экрана -->
-44        <activity
-44-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:27:9-29:40
-45            android:name="com.example.prank.DemoActivity"
-45-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:28:13-41
-46            android:exported="false" />
-46-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:29:13-37
-47
-48        <service
-48-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:31:9-38:19
-49            android:name="com.example.prank.PrankTriggerService"
-49-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:32:13-48
-50            android:exported="false"
-50-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:33:13-37
-51            android:foregroundServiceType="specialUse" >
-51-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:34:13-55
-52            <property
-52-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:35:13-37:49
-53                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-53-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:36:17-76
-54                android:value="prank-trigger" />
-54-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:37:17-46
-55        </service>
-56
-57        <provider
-57-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
-58            android:name="androidx.startup.InitializationProvider"
-58-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
-59            android:authorities="com.example.prank.androidx-startup"
-59-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
-60            android:exported="false" >
-60-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
-61            <meta-data
-61-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
-62                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-62-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
-63                android:value="androidx.startup" />
-63-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
-64            <meta-data
-64-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/yana/.gradle/caches/transforms-4/d1cf4ca3ccde81b23858a9d997c6a88d/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
-65                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-65-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/yana/.gradle/caches/transforms-4/d1cf4ca3ccde81b23858a9d997c6a88d/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
-66                android:value="androidx.startup" />
-66-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/yana/.gradle/caches/transforms-4/d1cf4ca3ccde81b23858a9d997c6a88d/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
-67            <meta-data
-67-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
-68                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-68-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
-69                android:value="androidx.startup" />
-69-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
-70        </provider>
-71
-72        <receiver
-72-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
-73            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-73-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
-74            android:directBootAware="false"
-74-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
-75            android:enabled="true"
-75-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
-76            android:exported="true"
-76-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
-77            android:permission="android.permission.DUMP" >
-77-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
-78            <intent-filter>
-78-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
-79                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-79-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
-79-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
-80            </intent-filter>
-81            <intent-filter>
-81-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
-82                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-82-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
-82-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
-83            </intent-filter>
-84            <intent-filter>
-84-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
-85                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-85-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
-85-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
-86            </intent-filter>
-87            <intent-filter>
-87-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
-88                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-88-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
-88-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
-89            </intent-filter>
-90        </receiver>
-91    </application>
-92
-93</manifest>
+31        android:usesCleartextTraffic="true" >
+31-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:15:9-44
+32
+33        <!-- Стартовый экран -->
+34        <activity
+34-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:19:9-26:20
+35            android:name="com.example.prank.MainActivity"
+35-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:20:13-41
+36            android:exported="true" >
+36-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:21:13-36
+37            <intent-filter>
+37-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:22:13-25:29
+38                <action android:name="android.intent.action.MAIN" />
+38-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:23:17-69
+38-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:23:25-66
+39
+40                <category android:name="android.intent.category.LAUNCHER" />
+40-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:24:17-77
+40-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:24:27-74
+41            </intent-filter>
+42        </activity>
+43
+44        <!-- Оставим как отладочный вариант полного экрана -->
+45        <activity
+45-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:29:9-31:40
+46            android:name="com.example.prank.DemoActivity"
+46-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:30:13-41
+47            android:exported="false" />
+47-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:31:13-37
+48
+49        <service
+49-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:33:9-40:19
+50            android:name="com.example.prank.PrankTriggerService"
+50-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:34:13-48
+51            android:exported="false"
+51-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:35:13-37
+52            android:foregroundServiceType="specialUse" >
+52-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:36:13-55
+53            <property
+53-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:37:13-39:49
+54                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+54-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:38:17-76
+55                android:value="prank-trigger" />
+55-->/home/yana/Документы/GitHub/Sber_mobile_dev_hack/android/app/src/main/AndroidManifest.xml:39:17-46
+56        </service>
+57
+58        <provider
+58-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+59            android:name="androidx.startup.InitializationProvider"
+59-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+60            android:authorities="com.example.prank.androidx-startup"
+60-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+61            android:exported="false" >
+61-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+62            <meta-data
+62-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+63                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+63-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+64                android:value="androidx.startup" />
+64-->[androidx.emoji2:emoji2:1.3.0] /home/yana/.gradle/caches/transforms-4/1a8dd8b586000eded0416f6cc0011877/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+65            <meta-data
+65-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/yana/.gradle/caches/transforms-4/d1cf4ca3ccde81b23858a9d997c6a88d/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
+66                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+66-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/yana/.gradle/caches/transforms-4/d1cf4ca3ccde81b23858a9d997c6a88d/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
+67                android:value="androidx.startup" />
+67-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/yana/.gradle/caches/transforms-4/d1cf4ca3ccde81b23858a9d997c6a88d/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
+68            <meta-data
+68-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+69                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+69-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+70                android:value="androidx.startup" />
+70-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+71        </provider>
+72
+73        <receiver
+73-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+74            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+74-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+75            android:directBootAware="false"
+75-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+76            android:enabled="true"
+76-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+77            android:exported="true"
+77-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+78            android:permission="android.permission.DUMP" >
+78-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+79            <intent-filter>
+79-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+80                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+80-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+80-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+81            </intent-filter>
+82            <intent-filter>
+82-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+83                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+83-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+83-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+84            </intent-filter>
+85            <intent-filter>
+85-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+86                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+86-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+86-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+87            </intent-filter>
+88            <intent-filter>
+88-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+89                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+89-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+89-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/yana/.gradle/caches/transforms-4/b27660ccabe04d5560de9b5a64cfc747/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+90            </intent-filter>
+91        </receiver>
+92    </application>
+93
+94</manifest>

@@ -3,6 +3,7 @@ package com.example.prank
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -15,29 +16,17 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
-/**
- * Overlay-обёртка над WebView + PrankEngine + TiltForwarder.
- *
- * Отвечает ТОЛЬКО за lifecycle:
- *   - create WebView, addView в WindowManager
- *   - загрузка движка, init, отложенный show до готовности страницы
- *   - переключение alpha на Shown
- *   - destroy WebView + removeView + stop TiltForwarder
- *
- * НЕ решает:
- *   - когда показать (это триггер в host)
- *   - какой payload (это PrankPresets / host)
- *   - когда закрыть (это exit-policy в host)
- *
- * Один экземпляр = один показ. Хочешь ещё раз — создавай новый.
- */
 class PrankOverlay(
     private val context: Context,
     private val windowManager: WindowManager,
-    private val engineAssetPath: String = "prank_engine/src",
+    private val config: PrankConfig = PrankConfig(),
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val spriteCache = SpriteCache.get(context, config)
+    private val assetResolver = AssetResolver(context, config)
 
     private val _events = MutableSharedFlow<PrankEvent>(
         replay = 8,
@@ -47,28 +36,24 @@ class PrankOverlay(
     val events: SharedFlow<PrankEvent> = _events.asSharedFlow()
 
     private var container: FrameLayout? = null
-    private var webView: PrankWebView? = null
-    private var engine: PrankEngine? = null
+    private var gameView: PrankGameView? = null
     private var tiltForwarder: TiltForwarder? = null
 
-    private var pageReady = false
-    private var pendingPayload: String? = null
     private var attached = false
-
-    val isAttached: Boolean get() = attached
+    private var atlasLoaded = false
+    private var pendingPayload: String? = null
+    private var manifest: Manifest? = null
 
     fun attach() {
         if (attached) return
         attached = true
 
-        val web = PrankWebView(context).apply { alpha = 0f }
-        val eng = PrankEngine(web, scope)
-        webView = web
-        engine = eng
+        val gv = PrankGameView(context, spriteCache).apply { alpha = 0f }
+        gameView = gv
 
         val frame = FrameLayout(context).apply {
             addView(
-                web,
+                gv,
                 FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT,
@@ -83,54 +68,102 @@ class PrankOverlay(
             @Suppress("DEPRECATION")
             WindowManager.LayoutParams.TYPE_PHONE
         }
-        val flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         val lp = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             type,
-            flags,
+            config.overlayFlags,
             PixelFormat.TRANSLUCENT,
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-        }
-        windowManager.addView(frame, lp)
+        ).apply { gravity = Gravity.TOP or Gravity.START }
 
-        tiltForwarder = TiltForwarder(context, web).also { it.start() }
-
-        web.onEnginePageFinished = {
-            pageReady = true
-            eng.init("""{"version":"1","enabled":true}""")
-            pendingPayload?.let {
-                pendingPayload = null
-                eng.show(it)
-            }
+        try {
+            windowManager.addView(frame, lp)
+        } catch (t: Throwable) {
+            Log.e("PrankOverlay", "addView failed", t)
+            attached = false
+            return
         }
 
-        // Переключаем alpha только на Shown — Error/Hidden оставляем host'у
+        tiltForwarder = TiltForwarder(context) { beta, gamma -> gv.setTilt(beta, gamma) }
+            .also { it.start() }
+
         scope.launch {
-            eng.events.collect { event ->
-                if (event is PrankEvent.Shown) web.alpha = 1f
+            gv.events.collect { event ->
+                if (event is PrankEvent.Shown) gv.alpha = 1f
                 _events.emit(event)
             }
         }
 
-        web.loadEngine(engineAssetPath)
+        scope.launch { loadAtlasAndStart() }
+    }
+
+    private suspend fun loadAtlasAndStart() {
+        val localManifest = withContext(Dispatchers.IO) {
+            try {
+                assetResolver.open("manifest.json")
+                    ?.bufferedReader()?.use { it.readText() }
+                    ?.let { Manifest.parse(it) }
+            } catch (t: Throwable) {
+                Log.w("PrankOverlay", "manifest parse failed", t)
+                null
+            }
+        }
+        manifest = localManifest
+        Log.d("PrankOverlay", "manifest loaded: variants=${localManifest?.variants?.keys}, cdn=${localManifest?.cdnBaseUrl}")
+
+        if (localManifest?.cdnBaseUrl != null) {
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val updated = AssetDownloader(context, localManifest).updateIfNeeded()
+                    if (updated) {
+                        SpriteCache.clearIfNeeded()
+                        Log.d("PrankOverlay", "assets updated via CDN, will apply on next shake")
+                    }
+                } catch (t: Throwable) {
+                    Log.w("PrankOverlay", "CDN update failed", t)
+                }
+            }
+        }
+
+        val variant = localManifest?.let { Manifest.pickVariant(it) } ?: "default"
+        val atlasFile = localManifest?.variants?.get(variant) ?: "atlas.json"
+        Log.d("PrankOverlay", "loading atlas: variant=$variant file=$atlasFile")
+
+        val atlas = withContext(Dispatchers.IO) {
+            val text = assetResolver.open(atlasFile)?.bufferedReader()?.use { it.readText() }
+            if (text == null) {
+                Log.e("PrankOverlay", "atlas $atlasFile not found")
+                null
+            } else {
+                try { Atlas.parse(text) }
+                catch (t: Throwable) {
+                    Log.e("PrankOverlay", "atlas parse failed", t); null
+                }
+            }
+        }
+
+        if (atlas == null) {
+            _events.tryEmit(PrankEvent.Error("ATLAS_LOAD_FAILED", "atlas $atlasFile missing or malformed"))
+            return
+        }
+
+        gameView?.setAtlas(atlas)
+        atlasLoaded = true
+        pendingPayload?.let { p ->
+            pendingPayload = null
+            startFromPayload(p)
+        }
     }
 
     fun show(payloadJson: String) {
         if (!attached) attach()
-        if (pageReady) {
-            engine?.show(payloadJson)
-        } else {
-            pendingPayload = payloadJson
-        }
+        if (atlasLoaded) startFromPayload(payloadJson)
+        else pendingPayload = payloadJson
     }
 
     fun hide(reason: String = "manual") {
-        engine?.hide(reason)
+        gameView?.stop()
+        _events.tryEmit(PrankEvent.Hidden("", reason))
     }
 
     fun detach() {
@@ -140,18 +173,27 @@ class PrankOverlay(
         tiltForwarder?.stop()
         tiltForwarder = null
 
-        val wv = webView
         val ov = container
-        webView = null
         container = null
-        engine = null
-        pageReady = false
+        gameView?.stop()
+        gameView = null
+        atlasLoaded = false
         pendingPayload = null
 
-        // destroy() до removeView() — иначе Chromium успевает ругнуться в лог
-        try { wv?.destroy() } catch (_: Throwable) {}
         try { if (ov != null) windowManager.removeView(ov) } catch (_: Throwable) {}
 
         scope.cancel()
+    }
+
+    private fun startFromPayload(payloadJson: String) {
+        val gv = gameView ?: return
+        val json = try { JSONObject(payloadJson) } catch (_: Exception) { null }
+        when (json?.optString("mode", "game") ?: "game") {
+            "final_dance" -> {
+                val durationMs = json?.optLong("duration_ms", 2200L) ?: 2200L
+                gv.startFinalDance(durationMs)
+            }
+            else -> gv.startGame()
+        }
     }
 }
