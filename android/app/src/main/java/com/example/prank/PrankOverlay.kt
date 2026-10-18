@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 class PrankOverlay(
     private val context: Context,
     private val windowManager: WindowManager,
-    private val engineAssetPath: String = "prank_engine",
+    private val engineAssetPath: String = "prank_engine/src",
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
