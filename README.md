@@ -1,31 +1,199 @@
-# Cat animation overlay
+# SberKids Prank — котики и клубки
 
-Cross-platform visual layer written in plain JavaScript and Canvas. It has no runtime dependencies and can run in a browser, Android WebView or iOS WKWebView.
+Кроссплатформенный интерактивный прикол для SberKids. После тряски телефона поверх текущего экрана появляются котики и клубки. Клубки перемещаются при наклоне устройства, а после сбора всех клубков котики исполняют короткий танец.
 
-The renderer owns only visuals:
+В репозитории находятся:
 
-- cat states with zero, one or two yarn balls;
-- yarn-ball sprites at coordinates supplied by game mechanics;
-- catch particles;
-- a four-frame, 1.6-second final dance;
-- responsive sizing for compact, portrait and landscape phone screens;
-- Retina-ready optimized PNG assets totaling about 1.21 MB.
+- готовый APK для Android;
+- Android-проект на Kotlin;
+- готовый к сборке iOS-проект на Swift 6;
+- общий слой анимации на JavaScript и Canvas.
 
-Sensors, gravity, collisions and game rules are intentionally outside this module. See `contract/animation_api.md` for the integration API.
+## Быстрый запуск на Android из готового APK
 
-## Local demo
+Готовый debug APK:
 
-Serve the repository root with any static server and open `/web/src/index.html`.
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Минимальная версия — Android 8.0 (API 26).
+
+### Вариант 1: установка APK вручную
+
+1. Передайте `app-debug.apk` на Android-телефон.
+2. Откройте файл на телефоне.
+3. Если Android запросит разрешение, разрешите установку приложений из этого источника.
+4. Установите и откройте приложение `Prank`.
+
+### Вариант 2: установка через ADB
+
+Подключите телефон с включённой отладкой по USB и выполните из корня репозитория:
+
+```bash
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Параметр `-r` обновляет уже установленную версию без удаления данных приложения.
+
+### Первый запуск Android
+
+1. Нажмите **«Разрешить рисовать поверх других приложений»** и включите разрешение для `Prank`.
+2. Вернитесь в приложение.
+3. Нажмите **«Включить триггер по тряске»**. На Android 13+ также подтвердите уведомления, чтобы видеть состояние foreground-сервиса.
+4. Нажмите **«Открыть демо-приложение»**.
+5. Потрясите телефон — поверх экрана запустится прикол.
+6. Наклоняйте телефон, чтобы катать клубки к котикам.
+7. Для принудительного запуска без тряски используйте кнопку **«Тест: показать игру сейчас»** на стартовом экране.
+8. Чтобы закрыть Android-оверлей вручную, быстро коснитесь экрана два раза.
+
+Если прикол не появляется, проверьте системное разрешение **«Поверх других приложений»** и наличие постоянного уведомления `Prank armed`.
+
+## Сборка Android из исходников
+
+Понадобятся:
+
+- Android Studio;
+- Android SDK 34;
+- JDK 17;
+- Android-устройство или эмулятор с API 26+.
+
+### Через Android Studio
+
+1. Запустите Android Studio.
+2. Выберите **Open** и откройте папку `android`.
+3. Дождитесь завершения Gradle Sync.
+4. Выберите подключённый телефон или эмулятор.
+5. Запустите конфигурацию `app` кнопкой **Run**.
+
+### Через терминал
+
+macOS или Linux:
+
+```bash
+cd android
+./gradlew assembleDebug
+```
+
+Windows:
+
+```powershell
+cd android
+.\gradlew.bat assembleDebug
+```
+
+После сборки APK появится здесь:
+
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+## Запуск на iOS в Xcode
+
+Понадобятся Mac и Xcode. Проект использует Swift 6, UIKit, SwiftUI, WebKit и CoreMotion; минимальная версия — iOS 15.
+
+Откройте проект:
+
+```text
+ios/PrankDemoHost/PrankDemoHost.xcodeproj
+```
+
+### Запуск в iOS Simulator
+
+1. Откройте `PrankDemoHost.xcodeproj` в Xcode.
+2. Выберите схему **PrankDemoHost**.
+3. Выберите любой iPhone Simulator.
+4. Откройте **Product → Scheme → Edit Scheme → Run → Arguments**.
+5. Для запуска полноценной игры отключите аргумент `-prankFailLoad YES` или замените его на `-prankFailLoad NO`. Если оставить `YES`, приложение специально покажет запасную анимацию вместо игры.
+6. Нажмите **Run** (`⌘R`).
+
+Управление в симуляторе:
+
+- запуск тряской: **Device → Shake** или `⌃⌘Z`;
+- запуск без тряски: нажмите лапку в нижнем меню;
+- наклон: используйте джойстик справа внизу;
+- также можно использовать стрелки или WASD после включения **I/O → Keyboard → Connect Hardware Keyboard**;
+- обычное касание закрывает прикол и одновременно проходит в интерфейс под оверлеем.
+
+Для удобной демонстрации в симуляторе можно заменить `-prankDemo NO` на `-prankDemo YES`. В этом режиме касание не закрывает прикол, поэтому джойстиком можно спокойно управлять клубками.
+
+### Запуск на физическом iPhone
+
+1. Подключите iPhone к Mac и выберите его в списке устройств Xcode.
+2. В настройках target `PrankDemoHost` откройте **Signing & Capabilities**.
+3. Выберите свою Team. При необходимости задайте уникальный Bundle Identifier.
+4. Убедитесь, что `-prankFailLoad YES` отключён.
+5. Нажмите **Run** (`⌘R`) и подтвердите доверие разработчику на iPhone, если система его запросит.
+6. Потрясите телефон для запуска и наклоняйте его для управления клубками.
+
+### Только собрать iOS-проект
+
+В Xcode выберите **Product → Build** (`⌘B`). Для проверки сборки симулятора через терминал:
+
+```bash
+xcodebuild \
+  -project ios/PrankDemoHost/PrankDemoHost.xcodeproj \
+  -scheme PrankDemoHost \
+  -sdk iphonesimulator \
+  -configuration Debug \
+  build CODE_SIGNING_ALLOWED=NO
+```
+
+## Структура проекта
+
+```text
+android/                 Android-приложение, готовый APK и WebView-интеграция
+ios/PrankDemoHost/       Демо-приложение для iOS и Xcode-проект
+ios/PrankLinker/         Нативный iOS-оверлей, сенсоры и мост к JavaScript
+web/src/                 Логика игры и Canvas-рендерер
+web/assets/              Спрайты котиков, танца и клубков
+contract/                Контракты конфигурации и взаимодействия слоёв
+```
+
+## Как работает прикол
+
+- Тряска запускает прозрачный оверлей.
+- Котики и клубки появляются в разных местах экрана.
+- На каждого котика создаётся ровно два клубка.
+- Наклон телефона передаётся в общий JavaScript-движок.
+- После сбора всех клубков котики исполняют короткий финальный танец.
+- Графика и логика игры общие для Android и iOS.
+
+## Локальный запуск веб-слоя
+
+Для быстрой проверки Canvas-анимации без мобильного приложения запустите из корня репозитория:
 
 ```bash
 python3 -m http.server 8765
 ```
 
-Then open `http://localhost:8765/web/src/index.html`.
+Откройте:
 
-## Tests
-
-```bash
-cd web
-npm test
+```text
+http://localhost:8765/web/src/index.html
 ```
+
+В консоли браузера выполните:
+
+```js
+mockGame()
+```
+
+Для управления используйте стрелки на клавиатуре.
+
+## Частые проблемы
+
+### На iOS вместо игры появляется один танцующий котик
+
+Отключите `-prankFailLoad YES` в **Edit Scheme → Run → Arguments**. Этот аргумент предназначен только для проверки запасного сценария.
+
+### В Android прикол не появляется после тряски
+
+- выдайте разрешение показа поверх других приложений;
+- нажмите **«Включить триггер по тряске»**;
+- проверьте уведомление `Prank armed`;
+- для проверки воспользуйтесь кнопкой **«Тест: показать игру сейчас»**.
+
+### В симуляторе iOS клубки не двигаются
+
+Используйте экранный джойстик или включите аппаратную клавиатуру симулятора и нажимайте стрелки/WASD. Реальные датчики наклона работают только на физическом iPhone.
