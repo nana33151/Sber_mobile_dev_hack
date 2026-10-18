@@ -7,6 +7,10 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import kotlin.math.atan2
 
+/**
+ * Читает акселерометр, вычисляет beta/gamma и отдаёт в callback.
+ * Калибровка — внутри GameState (по первому вызову setRawOrientation).
+ */
 class TiltForwarder(
     context: Context,
     private val onTilt: (beta: Float, gamma: Float) -> Unit,
@@ -14,10 +18,18 @@ class TiltForwarder(
 
     private val sm = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val accel: Sensor? = sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-    private var sx = 0f; private var sy = 0f; private var sz = 0f
 
-    fun start() { accel?.let { sm.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) } }
-    fun stop() { sm.unregisterListener(this) }
+    private var sx = 0f
+    private var sy = 0f
+    private var sz = 0f
+
+    fun start() {
+        accel?.let { sm.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+    }
+
+    fun stop() {
+        sm.unregisterListener(this)
+    }
 
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type != Sensor.TYPE_ACCELEROMETER) return

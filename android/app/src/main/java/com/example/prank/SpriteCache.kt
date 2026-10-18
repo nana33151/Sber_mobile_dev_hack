@@ -7,14 +7,13 @@ import android.util.Log
 import android.util.LruCache
 
 /**
- * Кеш целых спрайт-листов (PNG из assets).
- * Кадры НЕ нарезаем — режем при рисовании через canvas.drawBitmap(sheet, srcRect, dstRect).
- * Память: 1/8 от max heap (~32 MB на 256 MB heap), хватает на 3 листа.
+ * Кеш целых спрайт-листов (PNG) в памяти.
+ * Singleton через companion-фабрику: переживает пересоздание PrankOverlay между shake'ами.
+ * Кадры НЕ нарезаем — режем при рисовании (canvas.drawBitmap(sheet, srcRect, dstRect)).
  */
-class SpriteCache(
-    private val context: Context,
-    private val basePath: String = "prank_engine/assets",
-    maxBytes: Int = (Runtime.getRuntime().maxMemory() / 8).toInt(),
+class SpriteCache private constructor(
+    private val resolver: AssetResolver,
+    maxBytes: Int,
 ) {
     private val cache = object : LruCache<String, Bitmap>(maxBytes) {
         override fun sizeOf(key: String, bitmap: Bitmap): Int = bitmap.byteCount
@@ -23,15 +22,21 @@ class SpriteCache(
     fun load(fileName: String): Bitmap? {
         cache.get(fileName)?.let { return it }
         return try {
-            context.assets.open("$basePath/$fileName").use { stream ->
+            resolver.open(fileName)?.use { stream ->
                 val bmp = BitmapFactory.decodeStream(
                     stream, null,
                     BitmapFactory.Options().apply {
                         inPreferredConfig = Bitmap.Config.ARGB_8888
                         inScaled = false
                     }
-                ) ?: return null
-                cache.put(fileName, bmp)
+                )
+                if (bmp != null) {
+                    Log.d(
+                        "SpriteCache",
+                        "load $fileName from ${resolver.describe(fileName)} (${bmp.byteCount / 1024} KB)"
+                    )
+                    cache.put(fileName, bmp)
+                }
                 bmp
             }
         } catch (t: Throwable) {
@@ -41,4 +46,22 @@ class SpriteCache(
     }
 
     fun clear() = cache.evictAll()
+
+    companion object {
+        @Volatile
+        private var instance: SpriteCache? = null
+
+        fun get(context: Context, config: PrankConfig): SpriteCache {
+            return instance ?: synchronized(this) {
+                instance ?: SpriteCache(
+                    resolver = AssetResolver(context.applicationContext, config),
+                    maxBytes = (Runtime.getRuntime().maxMemory() / 8).toInt(),
+                ).also { instance = it }
+            }
+        }
+
+        fun clearIfNeeded() {
+            instance?.clear()
+        }
+    }
 }

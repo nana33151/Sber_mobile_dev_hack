@@ -3,6 +3,7 @@ package com.example.prank
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -18,16 +19,33 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
+/**
+ * Overlay-обёртка над PrankGameView (Canvas-рендер).
+ *
+ * Отвечает за:
+ *  - create PrankGameView, addView в WindowManager
+ *  - загрузку manifest.json + выбранного variant атласа (disk → assets)
+ *  - фоновое обновление с CDN (не блокирует первый показ)
+ *  - переключение alpha на Shown
+ *  - destroy view + removeView + stop TiltForwarder
+ *
+ * НЕ решает:
+ *  - когда показать (триггер в host)
+ *  - какой payload (PrankPresets / host)
+ *  - когда закрыть (exit-policy в host)
+ */
 class PrankOverlay(
     private val context: Context,
     private val windowManager: WindowManager,
     private val config: PrankConfig = PrankConfig(),
 ) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private val spriteCache = SpriteCache(context, "${config.engineAssetPath}/assets")
+    private val spriteCache = SpriteCache.get(context, config)
+    private val assetResolver = AssetResolver(context, config)
 
     private val _events = MutableSharedFlow<PrankEvent>(
-        replay = 8, extraBufferCapacity = 8,
+        replay = 8,
+        extraBufferCapacity = 8,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
     val events: SharedFlow<PrankEvent> = _events.asSharedFlow()
@@ -39,42 +57,52 @@ class PrankOverlay(
     private var attached = false
     private var atlasLoaded = false
     private var pendingPayload: String? = null
+    private var manifest: Manifest? = null
 
     fun attach() {
         if (attached) return
         attached = true
 
-        val gv = PrankGameView(context, spriteCache)
+        val gv = PrankGameView(context, spriteCache).apply { alpha = 0f }
         gameView = gv
 
         val frame = FrameLayout(context).apply {
-            addView(gv, FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT,
-            ))
+            addView(
+                gv,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                ),
+            )
         }
         container = frame
 
-        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
-
+        } else {
+            @Suppress("DEPRECATION")
+            WindowManager.LayoutParams.TYPE_PHONE
+        }
         val lp = WindowManager.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
             type,
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            config.overlayFlags,
             PixelFormat.TRANSLUCENT,
         ).apply { gravity = Gravity.TOP or Gravity.START }
 
-        windowManager.addView(frame, lp)
+        try {
+            windowManager.addView(frame, lp)
+        } catch (t: Throwable) {
+            Log.e("PrankOverlay", "addView failed", t)
+            attached = false
+            return
+        }
 
         tiltForwarder = TiltForwarder(context) { beta, gamma -> gv.setTilt(beta, gamma) }
             .also { it.start() }
 
+        // Прокидываем события: Shown переключает alpha локально, остальное — host'у
         scope.launch {
             gv.events.collect { event ->
                 if (event is PrankEvent.Shown) gv.alpha = 1f
@@ -82,18 +110,69 @@ class PrankOverlay(
             }
         }
 
-        scope.launch {
-            val atlas = withContext(Dispatchers.IO) {
-                val path = "${config.engineAssetPath}/assets/atlas.json"
-                val json = context.assets.open(path).bufferedReader().use { it.readText() }
-                Atlas.parse(json)
+        // Загрузка manifest + atlas (асинхронно)
+        scope.launch { loadAtlasAndStart() }
+    }
+
+    private suspend fun loadAtlasAndStart() {
+        // 1. Локальный manifest из assets (bundled fallback)
+        val localManifest = withContext(Dispatchers.IO) {
+            try {
+                val path = "${config.assetPath}/assets/manifest.json"
+                context.assets.open(path).bufferedReader().use { it.readText() }
+                    .let { Manifest.parse(it) }
+            } catch (t: Throwable) {
+                Log.w("PrankOverlay", "manifest.json not found, using defaults", t)
+                null
             }
-            gv.setAtlas(atlas)
-            atlasLoaded = true
-            pendingPayload?.let {
-                pendingPayload = null
-                startFromPayload(it)
+        }
+        manifest = localManifest
+
+        // 2. Фоновое обновление с CDN (не блокирует показ)
+        if (localManifest?.cdnBaseUrl != null) {
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val updated = AssetDownloader(context, localManifest).updateIfNeeded()
+                    if (updated) {
+                        SpriteCache.clearIfNeeded()
+                        Log.d("PrankOverlay", "assets updated via CDN")
+                    }
+                } catch (t: Throwable) {
+                    Log.w("PrankOverlay", "CDN update failed", t)
+                }
             }
+        }
+
+        // 3. Выбор variant + загрузка atlas
+        val variant = localManifest?.let { Manifest.pickVariant(it) } ?: "default"
+        val atlasFile = localManifest?.variants?.get(variant) ?: "atlas.json"
+        Log.d("PrankOverlay", "loading atlas: variant=$variant file=$atlasFile")
+
+        val atlas = withContext(Dispatchers.IO) {
+            val text = assetResolver.open(atlasFile)?.bufferedReader()?.use { it.readText() }
+            if (text == null) {
+                Log.e("PrankOverlay", "atlas $atlasFile not found in disk or assets")
+                null
+            } else {
+                try {
+                    Atlas.parse(text)
+                } catch (t: Throwable) {
+                    Log.e("PrankOverlay", "atlas parse failed", t)
+                    null
+                }
+            }
+        }
+
+        if (atlas == null) {
+            _events.tryEmit(PrankEvent.Error("ATLAS_LOAD_FAILED", "atlas $atlasFile missing or malformed"))
+            return
+        }
+
+        gameView?.setAtlas(atlas)
+        atlasLoaded = true
+        pendingPayload?.let { p ->
+            pendingPayload = null
+            startFromPayload(p)
         }
     }
 
@@ -119,6 +198,8 @@ class PrankOverlay(
         container = null
         gameView?.stop()
         gameView = null
+        atlasLoaded = false
+        pendingPayload = null
 
         try { if (ov != null) windowManager.removeView(ov) } catch (_: Throwable) {}
 

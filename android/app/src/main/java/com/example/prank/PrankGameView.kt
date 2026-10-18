@@ -38,12 +38,10 @@ class PrankGameView(
 
     private var running = false
     private var shownEmitted = false
-    private var lastFrameNs = 0L
 
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (!running) return
-            lastFrameNs = frameTimeNanos
 
             val nowMs = SystemClock.uptimeMillis()
             val result = state.update(nowMs)
@@ -76,11 +74,13 @@ class PrankGameView(
     fun setTilt(beta: Float, gamma: Float) = state.setRawOrientation(beta, gamma)
 
     fun startGame() {
+        shownEmitted = false
         state.startRandom()
         startLoop()
     }
 
     fun startFinalDance(durationMs: Long) {
+        shownEmitted = false
         state.startFinalDance(durationMs)
         startLoop()
     }
@@ -93,7 +93,6 @@ class PrankGameView(
     private fun startLoop() {
         if (running) return
         running = true
-        lastFrameNs = 0L
         Choreographer.getInstance().postFrameCallback(frameCallback)
     }
 
@@ -144,7 +143,10 @@ class PrankGameView(
         }
     }
 
-    private fun drawSprite(canvas: Canvas, sheet: Bitmap, frame: Frame, cx: Float, cy: Float, height: Float) {
+    private fun drawSprite(
+        canvas: Canvas, sheet: Bitmap, frame: Frame,
+        cx: Float, cy: Float, height: Float,
+    ) {
         val src = Rect(frame.x, frame.y, frame.x + frame.width, frame.y + frame.height)
         val aspect = frame.width.toFloat() / frame.height
         val w = height * aspect
