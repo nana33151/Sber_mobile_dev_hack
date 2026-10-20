@@ -1,0 +1,33 @@
+{
+  "catStates": {
+    "image": "cat-states.png",
+    "frames": {
+      "ready": { "x": 93, "y": 8, "width": 261, "height": 346 },
+      "oneBall": { "x": 424, "y": 8, "width": 252, "height": 346 },
+      "twoBalls": { "x": 760, "y": 8, "width": 264, "height": 346 }
+    }
+  },
+  "catDance": {
+    "image": "cat-dance-simple.png",
+    "durationMs": 1600,
+    "frames": [
+      { "x": 32, "y": 22, "width": 234, "height": 309 },
+      { "x": 305, "y": 25, "width": 230, "height": 306 },
+      { "x": 575, "y": 24, "width": 233, "height": 307 },
+      { "x": 847, "y": 25, "width": 227, "height": 306 }
+    ]
+  },
+  "yarnVariants": {
+    "image": "yarn-variants.png",
+    "frames": [
+      { "x": 11, "y": 110, "width": 123, "height": 144 },
+      { "x": 146, "y": 110, "width": 126, "height": 144 },
+      { "x": 284, "y": 110, "width": 125, "height": 144 },
+      { "x": 419, "y": 110, "width": 124, "height": 144 },
+      { "x": 553, "y": 110, "width": 125, "height": 144 },
+      { "x": 686, "y": 110, "width": 126, "height": 144 },
+      { "x": 819, "y": 110, "width": 126, "height": 144 },
+      { "x": 951, "y": 110, "width": 127, "height": 144 }
+    ]
+  }
+}

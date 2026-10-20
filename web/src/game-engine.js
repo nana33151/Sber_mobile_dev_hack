@@ -4,18 +4,27 @@ export class GameEngine {
         this.cats = [];
         this.yarns = [];
 
-        // Данные гироскопа
+        // Данные гироскопа / нативного наклона
         this.tilt = { x: 0, y: 0 };
         this.calibration = null; // Для запоминания начального угла телефона
         this.isCalibrated = false;
+        this.useNativeTilt = false;
 
-                // Делаем радиусы более точными (в 2 раза меньше)
+        // Делаем радиусы более точными (в 2 раза меньше)
         this.yarnRadius = 0.025; // Радиус самого клубка
-        this.catRadius = 0.05;   // Радиус тела кота  // Уменьшили, чтобы соответствовало визуальному размеру кота
+        this.catRadius = 0.05;   // Радиус тела кота
 
         this.boundOrientation = this.handleOrientation.bind(this);
         this.boundFrame = this.gameLoop.bind(this);
         this.rafId = null;
+    }
+
+    /** Наклон от нативного CoreMotion (−1…1). В WKWebView надёжнее DeviceOrientation. */
+    setNativeTilt(x, y) {
+        this.useNativeTilt = true;
+        this.isCalibrated = true;
+        this.tilt.x = Math.max(-1, Math.min(1, Number(x) || 0));
+        this.tilt.y = Math.max(-1, Math.min(1, Number(y) || 0));
     }
 
     // start() {
@@ -31,24 +40,25 @@ export class GameEngine {
 
     async start() {
         this.isPlaying = true;
-        this.isCalibrated = false;
+        this.isCalibrated = this.useNativeTilt;
         this.generateLevel();
 
-        // ЗАПРОС РАЗРЕШЕНИЯ ДЛЯ iOS 13+
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            try {
-                const permission = await DeviceOrientationEvent.requestPermission();
-                if (permission === 'granted') {
-                    window.addEventListener('deviceorientation', this.boundOrientation);
-                } else {
-                    console.warn("Пользователь отклонил доступ к гироскопу. Управление стрелками недоступно.");
+        // Если натив уже кормит наклон — DeviceOrientation не нужен (и на iOS требует жест).
+        if (!this.useNativeTilt) {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        window.addEventListener('deviceorientation', this.boundOrientation);
+                    } else {
+                        console.warn("Пользователь отклонил доступ к гироскопу. Управление стрелками недоступно.");
+                    }
+                } catch (error) {
+                    console.error("Ошибка запроса гироскопа:", error);
                 }
-            } catch (error) {
-                console.error("Ошибка запроса гироскопа:", error);
+            } else {
+                window.addEventListener('deviceorientation', this.boundOrientation);
             }
-        } else {
-            // Для Android и старых iOS разрешение не требуется
-            window.addEventListener('deviceorientation', this.boundOrientation);
         }
 
         this.rafId = requestAnimationFrame(this.boundFrame);
@@ -57,14 +67,16 @@ export class GameEngine {
 
     stop() {
         this.isPlaying = false;
+        this.useNativeTilt = false;
+        this.tilt = { x: 0, y: 0 };
         window.removeEventListener('deviceorientation', this.boundOrientation);
         if (this.rafId) cancelAnimationFrame(this.rafId);
-        window.CatAnimation.hide();
+        window.CatAnimation?.hide?.();
         console.log("[GameEngine] Игра остановлена.");
     }
 
     handleOrientation(event) {
-        if (!this.isPlaying || event.gamma === null || event.beta === null) return;
+        if (!this.isPlaying || this.useNativeTilt || event.gamma === null || event.beta === null) return;
 
         // Калибровка: запоминаем положение телефона при первом событии
         if (!this.isCalibrated) {
@@ -81,8 +93,7 @@ export class GameEngine {
 
     // Фоллбэк для тестирования в браузере с клавиатуры
     handleKeyboard(keys) {
-        if (!this.isPlaying) return;
-        // Если гироскоп не активен, слушаем стрелки
+        if (!this.isPlaying || this.useNativeTilt) return;
         if (!this.isCalibrated || (this.tilt.x === 0 && this.tilt.y === 0)) {
             this.tilt.x = keys.ArrowRight ? 1 : keys.ArrowLeft ? -1 : 0;
             this.tilt.y = keys.ArrowDown ? 1 : keys.ArrowUp ? -1 : 0;

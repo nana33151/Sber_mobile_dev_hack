@@ -5,31 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>SberKids Prank</title>
     <style>
-      body {
+      html, body {
         margin: 0;
-        background: #f2f4f8; /* Светлый фон для наглядности в браузере */
+        width: 100%;
+        height: 100%;
+        background: transparent;
         overflow: hidden;
       }
-      /* Canvas поверх всего приложения */
       #cat-animation-overlay {
         position: absolute;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        pointer-events: none; /* Клики проходят сквозь игру в приложение */
+        pointer-events: none;
         z-index: 9999;
       }
     </style>
   </head>
   <body>
-    <!-- Текст для визуализации, что приложение под нами -->
-    <div style="padding: 20px; font-family: sans-serif; opacity: 0.3;">
-      <h1>Экран SberKids</h1>
-      <p>Здесь может быть баланс, кнопки и т.д.</p>
-    </div>
-
-    <!-- Canvas для анимаций -->
     <canvas id="cat-animation-overlay" aria-hidden="true"></canvas>
 
     <!-- Точка входа -->

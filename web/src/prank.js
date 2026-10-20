@@ -22,16 +22,9 @@ window.PrankBridge = {
     show: async (payload) => {
         console.log("[PrankBridge] Вызов show()", payload);
 
-        const month = new Date().getMonth();
-        const isWinter = month === 11 || month === 0 || month === 1;
-
-        // ИСПРАВЛЕНО: пути теперь прямые, так как publicDir делает их доступными
         let atlasUrl = './atlas.json';
         if (payload?.assets?.atlas) {
             atlasUrl = payload.assets.atlas;
-        } else if (isWinter) {
-            atlasUrl = './atlas_winter.json';
-            console.log("[PrankBridge] Включена зимняя тема!");
         }
 
         if (!animationApi) {
@@ -39,13 +32,26 @@ window.PrankBridge = {
         }
 
         await animationApi.ready();
-        gameEngine.start();
+        // На iOS натив заранее шлёт setNativeTilt — тогда DeviceOrientation не трогаем.
+        if (payload?.native_tilt === true) {
+            gameEngine.useNativeTilt = true;
+        }
+        await gameEngine.start();
+        window.PrankBridge.emit('shown', { payload_id: payload?.id ?? 'cats_yarn' });
     },
 
-    hide: async () => {
+    hide: async (id) => {
         gameEngine.stop();
+        window.PrankBridge.emit('hidden', { payload_id: id ?? 'cats_yarn', reason: 'manual' });
+    },
+
+    /** Вызывается из WKWebView: evaluateJavaScript("PrankBridge.setTilt(x,y)") */
+    setTilt: (x, y) => {
+        gameEngine.setNativeTilt(x, y);
     }
 };
+
+window.__prankSetTilt = (x, y) => gameEngine.setNativeTilt(x, y);
 
 // --- Локальный тест для разработчика (браузер) ---
 const keys = {};

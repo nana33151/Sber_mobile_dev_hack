@@ -1,0 +1,2 @@
+# CocoaPods не требуется для PrankApp.
+# Проект использует только системные фреймворки: UIKit, WebKit, CoreMotion.
