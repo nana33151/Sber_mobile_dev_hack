@@ -9,29 +9,57 @@ export class GameEngine {
         this.calibration = null; // Для запоминания начального угла телефона
         this.isCalibrated = false;
 
-        // Константы для коллизий (в нормализованных координатах 0..1)
-        this.yarnRadius = 0.06;
-        this.catRadius = 0.12;
-
-        // Коллизии между объектами считаем в «долях короткой стороны экрана»,
-        // чтобы круг оставался кругом и на вытянутом экране 9:19,5.
-        this.yarnBodyRadius = 0.06; // клубок ≈ 0,12 короткой стороны
-        this.catBodyRadius = 0.17;  // котик ≈ 0,34 короткой стороны
+                // Делаем радиусы более точными (в 2 раза меньше)
+        this.yarnRadius = 0.025; // Радиус самого клубка
+        this.catRadius = 0.05;   // Радиус тела кота  // Уменьшили, чтобы соответствовало визуальному размеру кота
 
         this.boundOrientation = this.handleOrientation.bind(this);
         this.boundFrame = this.gameLoop.bind(this);
         this.rafId = null;
     }
 
-    start() {
+    // start() {
+    //     this.isPlaying = true;
+    //     this.isCalibrated = false;
+    //     this.generateLevel();
+    //
+    //     window.addEventListener('deviceorientation', this.boundOrientation);
+    //     this.rafId = requestAnimationFrame(this.boundFrame);
+    //
+    //     console.log("[GameEngine] Игра запущена. Наклоняйте телефон (или используйте стрелки).");
+    // }
+
+    async start() {
         this.isPlaying = true;
         this.isCalibrated = false;
+        // СБРОС ПОБЕДНОГО ЭКРАНА (если игра запускается заново)
+        const victoryScreen = document.getElementById('victory-screen');
+        if (victoryScreen) {
+            victoryScreen.classList.remove('visible');
+        }
+
+        this.generateLevel();
         this.generateLevel();
 
-        window.addEventListener('deviceorientation', this.boundOrientation);
-        this.rafId = requestAnimationFrame(this.boundFrame);
+        // ЗАПРОС РАЗРЕШЕНИЯ ДЛЯ iOS 13+
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission === 'granted') {
+                    window.addEventListener('deviceorientation', this.boundOrientation);
+                } else {
+                    console.warn("Пользователь отклонил доступ к гироскопу. Управление стрелками недоступно.");
+                }
+            } catch (error) {
+                console.error("Ошибка запроса гироскопа:", error);
+            }
+        } else {
+            // Для Android и старых iOS разрешение не требуется
+            window.addEventListener('deviceorientation', this.boundOrientation);
+        }
 
-        console.log("[GameEngine] Игра запущена. Наклоняйте телефон (или используйте стрелки).");
+        this.rafId = requestAnimationFrame(this.boundFrame);
+        console.log("[GameEngine] Игра запущена.");
     }
 
     stop() {
@@ -41,6 +69,8 @@ export class GameEngine {
         window.CatAnimation.hide();
         console.log("[GameEngine] Игра остановлена.");
     }
+
+
 
     handleOrientation(event) {
         if (!this.isPlaying || event.gamma === null || event.beta === null) return;
@@ -75,45 +105,83 @@ export class GameEngine {
         const numCats = Math.floor(Math.random() * 2) + 3; // 3 или 4 кота
         const numYarns = numCats * 2; // По 2 клубка на кота
 
-        // 1. Генерируем котов в случайных местах (не у самых краев) и не друг на друге
+
+
+ //////////////////////////////////////////////////////////////////////////////////////
+            //ДЩКУПОТМЦДУКЕПРТМЦЩКШЕОТПМДЦКШЩЕОРТМПЦЩКЕШРОТМЩКЕРОТМДКЩЕРМТ
+ //////////////////////////////////////////////////////////////////////////////////////
+        // 1. Генерируем котов в случайных местах БЕЗ НАЛОЖЕНИЙ
+        const aspectRatio = window.innerWidth / window.innerHeight;
+
         for (let i = 0; i < numCats; i++) {
-            let spawn;
+            let spawnX, spawnY, isTooClose;
             let attempts = 0;
+
             do {
-                spawn = { x: 0.15 + Math.random() * 0.7, y: 0.15 + Math.random() * 0.7 }; // 15–85% экрана
+                spawnX = 0.15 + Math.random() * 0.7;
+                spawnY = 0.15 + Math.random() * 0.7;
+
+                // Проверяем, не слишком ли близко к другим котам
+                isTooClose = this.cats.some(cat => {
+                    const dx = (spawnX - cat.x) * aspectRatio;
+                    const dy = spawnY - cat.y;
+                    // Радиус кота * 2 (чтобы они не пересекались) + отступ 0.1 для красоты
+                    return Math.hypot(dx, dy) < (this.catRadius * 2 + 0.1);
+                });
+
                 attempts++;
-            } while (
-                this.cats.some(cat => this.distance(spawn, cat) < this.catBodyRadius * 2) &&
-                attempts < 200
-            );
-            this.cats.push({ id: `cat-${i}`, x: spawn.x, y: spawn.y, balls: 0 });
-        }
+            } while (isTooClose && attempts < 50);
 
-        // 2. Генерируем клубки
+            this.cats.push({
+                id: `cat-${i}`,
+                x: spawnX,
+                y: spawnY,
+                balls: 0
+            });
+        }
+//////////////////////////////////////////////////////////////////////////////////////////////////
+        //ЫШГПТЦДШГКЕПТМЦЩШКГЕРПТМЦЩШКГЕРТПМЦШКЕГРТМЦДШКГЕРТМДШГКЕРМТШКГЕРМТУДКШЕГРТМУДШКЕГРМТ
+        /////////////////////////////////////////////////////////////////////////////////////////
+        // 2. Генерируем клубки БЕЗ НАЛОЖЕНИЙ
         for (let i = 0; i < numYarns; i++) {
-            let spawnX, spawnY, isTooCloseToCat;
+            let spawnX, spawnY, isTooClose;
             let attempts = 0;
 
-            // Клубки не появляются ни на котах, ни друг на друге
             do {
+                // Генерируем случайную точку
                 spawnX = 0.1 + Math.random() * 0.8;
                 spawnY = 0.1 + Math.random() * 0.8;
-                const spawn = { x: spawnX, y: spawnY };
-                isTooCloseToCat =
-                    this.cats.some(cat =>
-                        Math.hypot(spawnX - cat.x, spawnY - cat.y) < (this.yarnRadius + this.catRadius)
-                    ) ||
-                    this.yarns.some(yarn => this.distance(spawn, yarn) < this.yarnBodyRadius * 2);
+
+                // Проверяем, не слишком ли близко к КОТАМ
+                const tooCloseToCat = this.cats.some(cat => {
+                    const dx = (spawnX - cat.x) * aspectRatio;
+                    const dy = spawnY - cat.y;
+                    // Добавляем + 0.05, чтобы клубок не спавнился прямо на границе кота
+                    return Math.hypot(dx, dy) < (this.yarnRadius + this.catRadius + 0.05);
+                });
+
+                // Проверяем, не слишком ли близко к ДРУГИМ КЛУБКАМ
+                const tooCloseToYarn = this.yarns.some(yarn => {
+                    const dx = (spawnX - yarn.x) * aspectRatio;
+                    const dy = spawnY - yarn.y;
+                    // Умножаем радиус на 2 (так как мы считаем от центра до центра) + 0.03 для зазора
+                    return Math.hypot(dx, dy) < (this.yarnRadius * 2 + 0.03);
+                });
+
+                isTooClose = tooCloseToCat || tooCloseToYarn;
                 attempts++;
-            } while (isTooCloseToCat && attempts < 200);
+
+                // Если попались 50 раз подряд (очень тесно), сдаемся и спавним как есть
+            } while (isTooClose && attempts < 50);
 
             this.yarns.push({
                 id: `yarn-${i}`,
                 x: spawnX,
                 y: spawnY,
-                variant: Math.floor(Math.random() * 8), // 8 вариантов клубков
-                rotation: Math.random() * Math.PI * 2,
-                isCaught: false
+                variant: Math.floor(Math.random() * 8),
+                isCaught: false,
+                vx: 0, // <--- ДОБАВЛЕНО: скорость по X
+                vy: 0  // <--- ДОБАВЛЕНО: скорость по Y
             });
         }
 
@@ -125,77 +193,225 @@ export class GameEngine {
         });
     }
 
+    // gameLoop() {
+    //     if (!this.isPlaying) return;
+    //
+    //     let activeYarns = this.yarns.filter(y => !y.isCaught);
+    //     const aspectRatio = window.innerWidth / window.innerHeight;
+    //     const bounceFactor = 0.6; // Сила отскока (0 - нет отскока, 1 - идеальный отскок)
+    //
+    //     // 1. Применяем наклон + скорость отскока, и трение
+    //     activeYarns.forEach(yarn => {
+    //         // Трение (скорость отскока постепенно затухает)
+    //         yarn.vx *= 0.85;
+    //         yarn.vy *= 0.85;
+    //
+    //         // Итоговое движение: наклон от телефона + импульс отскока
+    //         yarn.x += this.tilt.x * 0.015 + yarn.vx;
+    //         yarn.y += this.tilt.y * 0.015 + yarn.vy;
+    //     });
+    //
+    //     // 2. Отскок от стен экрана
+    //     activeYarns.forEach(yarn => {
+    //         if (yarn.x < 0.04) {
+    //             yarn.x = 0.04;
+    //             yarn.vx = Math.abs(yarn.vx) * bounceFactor + 0.005; // Отскок вправо
+    //         }
+    //         if (yarn.x > 0.96) {
+    //             yarn.x = 0.96;
+    //             yarn.vx = -Math.abs(yarn.vx) * bounceFactor - 0.005; // Отскок влево
+    //         }
+    //         if (yarn.y < 0.04) {
+    //             yarn.y = 0.04;
+    //             yarn.vy = Math.abs(yarn.vy) * bounceFactor + 0.005; // Отскок вниз
+    //         }
+    //         if (yarn.y > 0.96) {
+    //             yarn.y = 0.96;
+    //             yarn.vy = -Math.abs(yarn.vy) * bounceFactor - 0.005; // Отскок вверх
+    //         }
+    //     });
+    //
+    //     // 3. Отскок между клубками (эффект "ртути")
+    //     for (let i = 0; i < activeYarns.length; i++) {
+    //         for (let j = i + 1; j < activeYarns.length; j++) {
+    //             const yA = activeYarns[i];
+    //             const yB = activeYarns[j];
+    //
+    //             const dx = (yA.x - yB.x) * aspectRatio;
+    //             const dy = yA.y - yB.y;
+    //             const dist = Math.hypot(dx, dy);
+    //             const minDist = this.yarnRadius * 2;
+    //
+    //             if (dist < minDist && dist > 0) {
+    //                 const overlap = (minDist - dist) / 2;
+    //                 const nx = dx / dist; // Нормаль столкновения
+    //                 const ny = dy / dist;
+    //
+    //                 // Раздвигаем позиции
+    //                 yA.x += (nx * overlap) / aspectRatio;
+    //                 yA.y += ny * overlap;
+    //                 yB.x -= (nx * overlap) / aspectRatio;
+    //                 yB.y -= ny * overlap;
+    //
+    //                 // Добавляем импульс отскока (толкаем друг друга)
+    //                 yA.vx += nx * 0.015;
+    //                 yA.vy += ny * 0.015;
+    //                 yB.vx -= nx * 0.015;
+    //                 yB.vy -= ny * 0.015;
+    //             }
+    //         }
+    //     }
+    //
+    //     // 4. Коллизия с котами
+    //     activeYarns.forEach(yarn => {
+    //         this.cats.forEach(cat => {
+    //             const dx = (yarn.x - cat.x) * aspectRatio;
+    //             const dy = yarn.y - cat.y;
+    //             const dist = Math.hypot(dx, dy);
+    //             const minDist = this.yarnRadius + this.catRadius;
+    //
+    //             if (dist < minDist) {
+    //                 if (cat.balls < 2) {
+    //                     // Кот голоден — забираем
+    //                     yarn.isCaught = true;
+    //                     cat.balls++;
+    //
+    //                     window.CatAnimation.playCatch({ catId: cat.id, x: yarn.x, y: yarn.y });
+    //                     if (window.PrankBridge?.emit) window.PrankBridge.emit('action', { action: 'cat_caught', catId: cat.id });
+    //                 } else {
+    //                     // Кот сыт — ОТТАЛКИВАЕМ с отскоком
+    //                     const angle = Math.atan2(dy, dx);
+    //                     const nx = Math.cos(angle);
+    //                     const ny = Math.sin(angle);
+    //
+    //                     // Возвращаем на границу
+    //                     yarn.x = cat.x + (nx * minDist) / aspectRatio;
+    //                     yarn.y = cat.y + ny * minDist;
+    //
+    //                     // Даем импульс отскока от кота
+    //                     yarn.vx += nx * 0.02;
+    //                     yarn.vy += ny * 0.02;
+    //                 }
+    //             }
+    //         });
+    //     });
+    //
+    //     // 5. Обновление сцены
+    //     window.CatAnimation.setScene({
+    //         visible: true,
+    //         cats: this.cats,
+    //         yarns: activeYarns
+    //     });
+    //
+    //     // 6. Проверка победы
+    //     if (activeYarns.length === 0) {
+    //         this.triggerWin();
+    //         return;
+    //     }
+    //
+    //     this.rafId = requestAnimationFrame(this.boundFrame);
+    // }
+
     gameLoop() {
         if (!this.isPlaying) return;
 
         let activeYarns = this.yarns.filter(y => !y.isCaught);
+        const aspectRatio = window.innerWidth / window.innerHeight;
 
-        // 1. Физика движения клубков
+        // НАСТРОЙКИ ФИЗИКИ (изменены для плавности)
+        const acceleration = 0.0012; // Было 0.003 (уменьшили в 2.5 раза)
+        const friction = 0.92;       // Оставляем (плавное затухание)
+        const bounceFactor = 0.5;    // Отскок от стен (было 0.6)
+
+        // 1. ПРИМЕНЯЕМ СИЛУ
         activeYarns.forEach(yarn => {
-            const previousX = yarn.x;
-            const previousY = yarn.y;
+            yarn.vx += this.tilt.x * acceleration;
+            yarn.vy += this.tilt.y * acceleration;
 
-            // Смещаем клубки с учетом наклона
-            const dx = this.tilt.x * 0.012;
-            const dy = this.tilt.y * 0.012;
+            yarn.vx *= friction;
+            yarn.vy *= friction;
 
-            yarn.x += dx;
-            yarn.y += dy;
-
-            // Жестко ограничиваем координаты (чтобы не улетали за экран)
-            yarn.x = Math.max(0.05, Math.min(0.95, yarn.x));
-            yarn.y = Math.max(0.05, Math.min(0.95, yarn.y));
-
-            // Кадр клубка вращается пропорционально реальному пути по экрану:
-            // он визуально катится, а не просто скользит вслед за наклоном.
-            const k = this.aspect();
-            const traveledX = (yarn.x - previousX) * k.x;
-            const traveledY = (yarn.y - previousY) * k.y;
-            const direction = Math.abs(traveledX) >= Math.abs(traveledY)
-                ? Math.sign(traveledX || 1)
-                : Math.sign(traveledY || 1);
-            yarn.rotation += (Math.hypot(traveledX, traveledY) / this.yarnBodyRadius) * direction;
+            yarn.x += yarn.vx;
+            yarn.y += yarn.vy;
         });
 
-        // 1б. Клубки сталкиваются друг с другом, а не слипаются
-        this.separateYarns(activeYarns);
+        // 2. Отскок от стен экрана
+        activeYarns.forEach(yarn => {
+            if (yarn.x < 0.04) { yarn.x = 0.04; yarn.vx = Math.abs(yarn.vx) * bounceFactor; }
+            if (yarn.x > 0.96) { yarn.x = 0.96; yarn.vx = -Math.abs(yarn.vx) * bounceFactor; }
+            if (yarn.y < 0.04) { yarn.y = 0.04; yarn.vy = Math.abs(yarn.vy) * bounceFactor; }
+            if (yarn.y > 0.96) { yarn.y = 0.96; yarn.vy = -Math.abs(yarn.vy) * bounceFactor; }
+        });
 
-        // 2. Проверка коллизий
+        // 3. Отскок между клубками
+        for (let i = 0; i < activeYarns.length; i++) {
+            for (let j = i + 1; j < activeYarns.length; j++) {
+                const yA = activeYarns[i];
+                const yB = activeYarns[j];
+
+                const dx = (yA.x - yB.x) * aspectRatio;
+                const dy = yA.y - yB.y;
+                const dist = Math.hypot(dx, dy);
+                const minDist = this.yarnRadius * 2;
+
+                if (dist < minDist && dist > 0) {
+                    const overlap = (minDist - dist) / 2;
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+
+                    yA.x += (nx * overlap) / aspectRatio;
+                    yA.y += ny * overlap;
+                    yB.x -= (nx * overlap) / aspectRatio;
+                    yB.y -= ny * overlap;
+
+                    // УМЕНЬШЕН ИМПУЛЬС ОТСКОКА МЕЖДУ КЛУБКАМИ (было 0.015)
+                    yA.vx += nx * 0.004;
+                    yA.vy += ny * 0.004;
+                    yB.vx -= nx * 0.004;
+                    yB.vy -= ny * 0.004;
+                }
+            }
+        }
+
+        // 4. Коллизия с котами
         activeYarns.forEach(yarn => {
             this.cats.forEach(cat => {
-                if (cat.balls >= 2) return; // Кот уже сыт
+                const dx = (yarn.x - cat.x) * aspectRatio;
+                const dy = yarn.y - cat.y;
+                const dist = Math.hypot(dx, dy);
+                const minDist = this.yarnRadius + this.catRadius;
 
-                // Считаем расстояние между центрами
-                const dist = Math.hypot(yarn.x - cat.x, yarn.y - cat.y);
+                if (dist < minDist) {
+                    if (cat.balls < 2) {
+                        yarn.isCaught = true;
+                        cat.balls++;
 
-                if (dist < (this.yarnRadius + this.catRadius)) {
-                    // Коллизия!
-                    yarn.isCaught = true;
-                    cat.balls++;
+                        window.CatAnimation.playCatch({ catId: cat.id, x: yarn.x, y: yarn.y });
+                        if (window.PrankBridge?.emit) window.PrankBridge.emit('action', { action: 'cat_caught', catId: cat.id });
+                    } else {
+                        const angle = Math.atan2(dy, dx);
+                        const nx = Math.cos(angle);
+                        const ny = Math.sin(angle);
 
-                    // Вызываем эффект частиц
-                    window.CatAnimation.playCatch({
-                        catId: cat.id,
-                        x: yarn.x,
-                        y: yarn.y
-                    });
+                        yarn.x = cat.x + (nx * minDist) / aspectRatio;
+                        yarn.y = cat.y + ny * minDist;
 
-                    // Отправляем нативу для вибрации
-                    if (window.PrankBridge?.emit) {
-                        window.PrankBridge.emit('action', { action: 'cat_caught', catId: cat.id });
+                        // УМЕНЬШЕН ИМПУЛЬС ОТСКОКА ОТ КОТА (было 0.025)
+                        yarn.vx = nx * 0.008;
+                        yarn.vy = ny * 0.008;
                     }
                 }
             });
         });
 
-        // 3. Обновление сцены в рендерере
+        // 5. Обновление сцены
         window.CatAnimation.setScene({
             visible: true,
             cats: this.cats,
             yarns: activeYarns
         });
 
-        // 4. Проверка победы
+        // 6. Проверка победы
         if (activeYarns.length === 0) {
             this.triggerWin();
             return;
@@ -204,73 +420,85 @@ export class GameEngine {
         this.rafId = requestAnimationFrame(this.boundFrame);
     }
 
-    /// Масштаб нормализованных осей к короткой стороне экрана.
-    aspect() {
-        const width = window.innerWidth || 1;
-        const height = window.innerHeight || 1;
-        const short = Math.min(width, height);
-        return { x: width / short, y: height / short };
-    }
+    // triggerWin() {
+    //     this.isPlaying = false;
+    //     console.log("[GameEngine] Все клубки пойманы! Запуск танца...");
+    //
+    //     // Запускаем танец (длительность берем из atlas.json или ставим 1600мс)
+    //     window.CatAnimation.playDance({ durationMs: 1600 });
+    //
+    //     // Ждем окончания танца
+    //     const onDanceComplete = () => {
+    //         window.removeEventListener('cat-animation:dance-complete', onDanceComplete);
+    //
+    //         console.log("[GameEngine] Танец окончен. Отправляем game_won нативу.");
+    //         if (window.PrankBridge?.emit) {
+    //             window.PrankBridge.emit('action', { action: 'game_won' });
+    //         }
+    //     };
+    //     window.addEventListener('cat-animation:dance-complete', onDanceComplete);
+    // }
 
-    /// Расстояние между точками в долях короткой стороны экрана.
-    distance(a, b) {
-        const k = this.aspect();
-        return Math.hypot((a.x - b.x) * k.x, (a.y - b.y) * k.y);
-    }
-
-    /// Расталкиваем пересекающиеся клубки поровну вдоль линии центров (несколько проходов —
-    /// чтобы кучка в углу тоже разошлась). Края экрана остаются жёсткими.
-    separateYarns(yarns) {
-        const k = this.aspect();
-        const minDistance = this.yarnBodyRadius * 2;
-        for (let pass = 0; pass < 3; pass++) {
-            for (let i = 0; i < yarns.length; i++) {
-                for (let j = i + 1; j < yarns.length; j++) {
-                    const a = yarns[i];
-                    const b = yarns[j];
-                    let dx = (b.x - a.x) * k.x;
-                    let dy = (b.y - a.y) * k.y;
-                    let dist = Math.hypot(dx, dy);
-                    if (dist >= minDistance) continue;
-                    if (dist < 1e-6) {
-                        // Совпали точно — разводим в случайную сторону
-                        const angle = Math.random() * Math.PI * 2;
-                        dx = Math.cos(angle);
-                        dy = Math.sin(angle);
-                        dist = 1;
-                    }
-                    const push = (minDistance - Math.min(dist, minDistance)) / 2;
-                    const nx = dx / dist;
-                    const ny = dy / dist;
-                    a.x -= (nx * push) / k.x;
-                    a.y -= (ny * push) / k.y;
-                    b.x += (nx * push) / k.x;
-                    b.y += (ny * push) / k.y;
-                    a.x = Math.max(0.05, Math.min(0.95, a.x));
-                    a.y = Math.max(0.05, Math.min(0.95, a.y));
-                    b.x = Math.max(0.05, Math.min(0.95, b.x));
-                    b.y = Math.max(0.05, Math.min(0.95, b.y));
-                }
-            }
-        }
-    }
+    // triggerWin() {
+    //     this.isPlaying = false;
+    //     console.log("[GameEngine] Все клубки пойманы! Запуск танца...");
+    //
+    //     // Запускаем танец
+    //     window.CatAnimation.playDance({ durationMs: 1600 });
+    //
+    //     const onDanceComplete = () => {
+    //         window.removeEventListener('cat-animation:dance-complete', onDanceComplete);
+    //         console.log("[GameEngine] Танец окончен. Показываем победный экран.");
+    //
+    //         // 1. Показываем картинку победы
+    //         const victoryScreen = document.getElementById('victory-screen');
+    //         if (victoryScreen) {
+    //             victoryScreen.style.display = 'block';
+    //             // Небольшая задержка, чтобы сработал CSS-переход (opacity)
+    //             setTimeout(() => victoryScreen.classList.add('visible'), 50);
+    //         }
+    //
+    //         // 2. Отправляем нативу, что игра пройдена
+    //         // Можно добавить задержку в 2-3 секунды, чтобы ребенок успел посмотреть картинку,
+    //         // прежде чем натив закроет WebView.
+    //         setTimeout(() => {
+    //             if (window.PrankBridge?.emit) {
+    //                 window.PrankBridge.emit('action', { action: 'game_won' });
+    //             }
+    //         }, 2500);
+    //     };
+    //
+    //     window.addEventListener('cat-animation:dance-complete', onDanceComplete);
+    // }
 
     triggerWin() {
         this.isPlaying = false;
         console.log("[GameEngine] Все клубки пойманы! Запуск танца...");
 
-        // Запускаем танец (длительность берем из atlas.json или ставим 1600мс)
+        // Запускаем танец
         window.CatAnimation.playDance({ durationMs: 1600 });
 
-        // Ждем окончания танца
-        const onDanceComplete = () => {
-            window.removeEventListener('cat-animation:dance-complete', onDanceComplete);
+        // ВАЖНО: Слушаем событие на элементе canvas, а не на window!
+        const canvas = document.getElementById('cat-animation-overlay');
 
-            console.log("[GameEngine] Танец окончен. Отправляем game_won нативу.");
-            if (window.PrankBridge?.emit) {
-                window.PrankBridge.emit('action', { action: 'game_won' });
+        const onDanceComplete = () => {
+            canvas.removeEventListener('cat-animation:dance-complete', onDanceComplete);
+            console.log("[GameEngine] Танец окончен! Показываем победный экран.");
+
+            // Просто добавляем класс, CSS сделает всё плавно
+            const victoryScreen = document.getElementById('victory-screen');
+            if (victoryScreen) {
+                victoryScreen.classList.add('visible');
             }
+
+            // Отправляем нативу, что игра пройдена (через 2.5 секунды)
+            setTimeout(() => {
+                if (window.PrankBridge?.emit) {
+                    window.PrankBridge.emit('action', { action: 'game_won' });
+                }
+            }, 2500);
         };
-        window.addEventListener('cat-animation:dance-complete', onDanceComplete);
+
+        canvas.addEventListener('cat-animation:dance-complete', onDanceComplete);
     }
 }

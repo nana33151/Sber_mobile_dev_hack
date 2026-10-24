@@ -2,30 +2,68 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <title>Prank Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>SberKids Prank</title>
     <style>
-      html, body {
-        margin: 0; padding: 0;
-        width: 100%; height: 100%;
-        background: transparent;
+      body {
+        margin: 0;
         overflow: hidden;
-        -webkit-user-select: none;
-        user-select: none;
+        background-color: #ffe6f0;
       }
+
+      #game-background {
+        position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+        background-image: url('../assets/1792345219.png');
+        background-size: cover; background-position: center; background-repeat: no-repeat; z-index: 1;
+      }
+
       #cat-animation-overlay {
-        position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
-        display: block;
-        pointer-events: none;
+        position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+        pointer-events: none; z-index: 2;
+      }
+
+      #victory-screen {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background-image: url('../assets/victory.png');
+        background-size: cover; background-position: center; background-repeat: no-repeat;
         z-index: 9999;
+
+        /* Изначально скрыто */
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #victory-screen.visible {
+        visibility: visible;
+        pointer-events: auto;
+        /* Используем forwards, чтобы картинка осталась на экране после анимации */
+        animation: juicyBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+
+      @keyframes juicyBounce {
+        0% {
+          opacity: 0;
+          transform: scale(0.3); /* Начинаем с маленькой точки */
+        }
+        60% {
+          opacity: 1;
+          transform: scale(1.05); /* Перелетаем чуть больше нормы (эффект пружины) */
+        }
+        80% {
+          transform: scale(0.95); /* Слегка сплюскиваемся */
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1); /* Встаем идеально */
+        }
       }
     </style>
   </head>
   <body>
+    <div id="game-background"></div>
     <canvas id="cat-animation-overlay" aria-hidden="true"></canvas>
+    <div id="victory-screen"></div>
     <script type="module" src="./prank.js"></script>
   </body>
 </html>

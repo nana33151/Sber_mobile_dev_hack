@@ -152,7 +152,7 @@ export class CatAnimationRenderer {
 
     if (this.dance && time - this.dance.startedAt >= this.dance.durationMs) {
       this.dance = null;
-      this.canvas.dispatchEvent(new CustomEvent("cat-animation:dance-complete", { bubbles: true }));
+      this.canvas.dispatchEvent(new CustomEvent("cat-animation:dance-complete"));
     }
   }
 
@@ -160,18 +160,44 @@ export class CatAnimationRenderer {
     const frames = this.atlas.yarnVariants.frames;
     const frame = frames[yarn.variant % frames.length];
     const size = layout.yarnHeight * yarn.scale;
+
+    // ВОЗВРАЩАЕМ СГЛАЖИВАНИЕ (так как соседи больше не мешают)
+    this.context.imageSmoothingEnabled = true;
+
     this.drawSprite(
       this.images.yarnVariants,
       frame,
       yarn.x * this.width,
       yarn.y * this.height,
       size,
-      yarn.rotation,
+      0,
       yarn.opacity
     );
   }
 
+  // drawYarn(yarn, layout) {
+  //   const frames = this.atlas.yarnVariants.frames;
+  //   const frame = frames[yarn.variant % frames.length];
+  //   const size = layout.yarnHeight * yarn.scale;
+  //
+  //   // Отключаем сглаживание для клубков
+  //   this.context.imageSmoothingEnabled = false;
+  //
+  //   this.drawSprite(
+  //     this.images.yarnVariants,
+  //     frame,
+  //     yarn.x * this.width,
+  //     yarn.y * this.height,
+  //     size,
+  //     0, // Принудительно ставим 0, чтобы избежать багов Canvas при повороте
+  //     yarn.opacity
+  //   );
+  // }
+
   drawCat(cat, time, layout) {
+    // ВКЛЮЧАЕМ СГЛАЖИВАНИЕ ДЛЯ КОТОВ (чтобы они были плавными)
+    this.context.imageSmoothingEnabled = true;
+
     let frame;
     let image;
     let bounce = 0;
@@ -210,21 +236,65 @@ export class CatAnimationRenderer {
 
     context.save();
     context.globalAlpha = opacity;
-    context.translate(centerX, centerY);
-    context.rotate(rotation);
+
+    context.translate(Math.round(centerX), Math.round(centerY));
+    if (rotation !== 0) context.rotate(rotation);
+
+    // ДОБАВЛЯЕМ 1 ПИКСЕЛЬ ПРОЗРАЧНОГО ЗАПАСА (expand)
+    const expand = 1;
+    const sx = frame.x - expand;
+    const sy = frame.y - expand;
+    const sw = frame.width + (expand * 2);
+    const sh = frame.height + (expand * 2);
+
+    // Убираем Math.round для ширины/высоты, чтобы масштабирование было плавным
+    const drawW = targetWidth;
+    const drawH = targetHeight;
+    const drawX = -drawW / 2;
+    const drawY = -drawH / 2;
+
     context.drawImage(
       image,
-      frame.x,
-      frame.y,
-      frame.width,
-      frame.height,
-      -targetWidth / 2,
-      -targetHeight / 2,
-      targetWidth,
-      targetHeight
+      sx, sy, sw, sh,
+      drawX, drawY, drawW, drawH
     );
+
     context.restore();
   }
+
+  // drawSprite(image, frame, centerX, centerY, targetHeight, rotation, opacity) {
+  //   const ratio = frame.width / frame.height;
+  //   const targetWidth = targetHeight * ratio;
+  //   const context = this.context;
+  //
+  //   context.save();
+  //   context.globalAlpha = opacity;
+  //
+  //   // Округляем позицию
+  //   context.translate(Math.round(centerX), Math.round(centerY));
+  //   if (rotation !== 0) context.rotate(rotation);
+  //
+  //   // УВЕЛИЧЕННЫЙ ОТСТУП (6 пикселей)
+  //   const inset = 6;
+  //   const sx = Math.floor(frame.x) + inset;
+  //   const sy = Math.floor(frame.y) + inset;
+  //   const sw = Math.floor(frame.width) - (inset * 2);
+  //   const sh = Math.floor(frame.height) - (inset * 2);
+  //
+  //   // ОКРУГЛЯЕМ РАЗМЕР И КООРДИНАТЫ ОТРИСОВКИ
+  //   const drawW = Math.round(targetWidth);
+  //   const drawH = Math.round(targetHeight);
+  //   const drawX = Math.round(-drawW / 2);
+  //   const drawY = Math.round(-drawH / 2);
+  //
+  //   context.drawImage(
+  //     image,
+  //     sx, sy, sw, sh,
+  //     drawX, drawY, drawW, drawH
+  //   );
+  //
+  //   context.restore();
+  // }
 
   drawParticles() {
     const context = this.context;
